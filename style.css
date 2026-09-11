@@ -311,3 +311,107 @@ body::before {
 ::-webkit-scrollbar-track { background: #DFD9CE; }
 ::-webkit-scrollbar-thumb { background: #8C867C; border: 1px solid #EDE8DF; border-radius: 2px; }
 ::-webkit-scrollbar-thumb:hover { background: #665F55; }
+
+/* ==========================================================================
+   楓之谷 BGM 音樂播放器與選曲視窗樣式
+   ========================================================================== */
+
+/* 頂部 BGM 播放條 */
+.maple-bgm-bar {
+  background: rgba(18, 26, 40, 0.92);
+  backdrop-filter: blur(8px);
+  border: 2px solid #D99B26;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.6), inset 0 0 0 1px rgba(253,224,71,0.3);
+  border-radius: 9999px;
+  transition: all 0.2s ease;
+}
+.maple-bgm-bar:hover {
+  border-color: #FBBF24;
+  box-shadow: 0 4px 18px rgba(245,158,11,0.35), inset 0 0 0 1px rgba(253,224,71,0.5);
+}
+
+/* 旋轉黑膠唱片 */
+.maple-vinyl {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #FBBF24 20%, #111827 21%, #1f2937 40%, #111827 41%, #374151 60%, #111827 61%, #000000 100%);
+  border: 2px solid #D97706;
+  box-shadow: 0 0 6px rgba(245,158,11,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  flex-shrink: 0;
+}
+.maple-vinyl-playing {
+  animation: spinVinyl 3.5s linear infinite;
+}
+@keyframes spinVinyl {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* 音樂跳動頻譜條 */
+.maple-equalizer {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 12px;
+  width: 14px;
+}
+.maple-eq-bar {
+  width: 2px;
+  background: #FBBF24;
+  border-radius: 1px;
+}
+.maple-eq-playing .maple-eq-bar:nth-child(1) { animation: eqJump 0.8s ease-in-out infinite alternate; }
+.maple-eq-playing .maple-eq-bar:nth-child(2) { animation: eqJump 0.6s ease-in-out infinite alternate 0.2s; }
+.maple-eq-playing .maple-eq-bar:nth-child(3) { animation: eqJump 0.9s ease-in-out infinite alternate 0.4s; }
+@keyframes eqJump {
+  0% { height: 3px; }
+  100% { height: 12px; }
+}
+
+/* 自訂音量滑桿 */
+.maple-volume-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  border-radius: 2px;
+  background: #374151;
+  outline: none;
+  transition: background 0.15s;
+}
+.maple-volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #FBBF24;
+  border: 1px solid #B45309;
+  cursor: pointer;
+  box-shadow: 0 0 4px rgba(245,158,11,0.8);
+}
+.maple-volume-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+}
+
+/* BGM 歌曲清單項目 */
+.bgm-track-item {
+  transition: all 0.15s;
+  cursor: pointer;
+  border-left: 3px solid transparent;
+}
+.bgm-track-item:hover {
+  background: rgba(254, 243, 199, 0.9);
+  border-left-color: #D97706;
+  transform: translateX(2px);
+}
+.bgm-track-item.is-active {
+  background: #FEF3C7 !important;
+  border-left-color: #B45309 !important;
+  box-shadow: inset 0 0 0 1px rgba(217, 119, 6, 0.4);
+}
+
