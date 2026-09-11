@@ -6,7 +6,7 @@
 
 /* 楓之谷經典背景與 Artale 官方視覺 */
 body {
-  background: #101F33 url('./images/artale-bg.jpg') no-repeat center center fixed;
+  background: #101F33 url('./images/free-market-bg.jpg') no-repeat center center fixed;
   background-size: cover;
   min-height: 100vh;
   min-height: 100dvh;
@@ -25,13 +25,12 @@ body {
   }
 }
 
-/* 復古像素網格與半透明暗角模糊層，襯托楓之谷視窗 */
+/* 復古像素網格與場景柔和層 */
 body::before {
   content: "";
   position: fixed;
   top: 0; left: 0; width: 100%; height: 100%;
-  background: radial-gradient(circle at 50% 35%, rgba(16, 31, 51, 0.72) 0%, rgba(10, 18, 30, 0.90) 100%);
-  backdrop-filter: blur(4px);
+  background: radial-gradient(circle at 50% 30%, rgba(10, 18, 30, 0.25) 0%, rgba(10, 18, 30, 0.55) 100%);
   pointer-events: none;
   z-index: 0;
 }
@@ -414,4 +413,488 @@ body::before {
   border-left-color: #B45309 !important;
   box-shadow: inset 0 0 0 1px rgba(217, 119, 6, 0.4);
 }
+
+/* ==========================================================================
+   自由市場場景 (Free Market Hub) 樣式
+   ========================================================================== */
+
+/* 自由市場舞台卡片 */
+.free-market-stage {
+  background: rgba(14, 25, 41, 0.72);
+  border: 3px solid #547397;
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.8), inset 0 0 20px rgba(84, 115, 151, 0.3);
+  backdrop-filter: blur(8px);
+  position: relative;
+}
+
+/* 經典對話氣泡 (Maple Speech Bubble) */
+.maple-bubble {
+  position: relative;
+  background: #FFFFFF;
+  border: 2px solid #2B3A4A;
+  border-radius: 12px;
+  padding: 6px 12px;
+  color: #1F2937;
+  font-size: 11px;
+  font-weight: 700;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+  white-space: nowrap;
+  animation: bubbleFloat 2.4s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+.maple-bubble::after {
+  content: "";
+  position: absolute;
+  bottom: -7px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 7px 6px 0 6px;
+  border-style: solid;
+  border-color: #FFFFFF transparent transparent transparent;
+}
+.maple-bubble::before {
+  content: "";
+  position: absolute;
+  bottom: -9px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 9px 8px 0 8px;
+  border-style: solid;
+  border-color: #2B3A4A transparent transparent transparent;
+}
+
+@keyframes bubbleFloat {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-6px); }
+}
+
+/* 互動 NPC 實體 */
+.market-npc {
+  position: relative;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  padding: 10px;
+}
+.market-npc:hover {
+  transform: translateY(-6px);
+}
+.market-npc .npc-sprite {
+  transition: all 0.25s ease;
+  image-rendering: pixelated;
+}
+.market-npc:hover .npc-sprite {
+  filter: drop-shadow(0 0 14px rgba(253, 224, 71, 0.9));
+  transform: scale(1.08);
+}
+.market-npc.npc-gm:hover .npc-sprite {
+  filter: drop-shadow(0 0 16px rgba(56, 189, 248, 0.95)) drop-shadow(0 0 4px #FFFFFF);
+}
+
+/* NPC 地面陰影 */
+.npc-floor-shadow {
+  width: 70px;
+  height: 12px;
+  background: radial-gradient(ellipse at center, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 70%);
+  border-radius: 50%;
+  margin-top: -6px;
+}
+
+/* ==========================================================================
+   神匠之垂衝裝備鍛造所 (Forge Window) 樣式與楓之谷經典楓葉特效
+   ========================================================================== */
+
+/* 衝卷鍛造所鐵砧大卡 */
+.forge-panel {
+  background: #EDE8DF;
+  border: 3px solid;
+  border-color: #A3A8AF #383E45 #2A3037 #C7CCD4;
+  box-shadow: 0 12px 35px rgba(0,0,0,0.85);
+  border-radius: 4px;
+}
+
+/* 鍛造裝備大插槽 */
+.forge-equip-slot {
+  width: 72px;
+  height: 72px;
+  background: radial-gradient(circle, #FFFBEB 0%, #FEF3C7 60%, #FDE68A 100%);
+  border: 3px solid #B45309;
+  border-radius: 8px;
+  box-shadow: inset 0 2px 6px rgba(0,0,0,0.25), 0 4px 12px rgba(180, 83, 9, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+/* 卷軸選擇清單卡片 */
+.scroll-item-card {
+  background: #FFFFFF;
+  border: 2px solid #CBD5E1;
+  border-radius: 6px;
+  padding: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.scroll-item-card:hover {
+  border-color: #F59E0B;
+  background: #FFFBEB;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(245, 158, 11, 0.2);
+}
+.scroll-item-card.is-selected {
+  border-color: #D97706 !important;
+  background: #FEF3C7 !important;
+  box-shadow: 0 0 0 2px rgba(217, 119, 6, 0.5);
+}
+
+/* --------------------------------------------------------------------------
+   楓之谷經典特效 1：金色楓葉大成功 (Golden Maple Leaf Burst)
+   -------------------------------------------------------------------------- */
+.maple-stage-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* 金色衝擊波擴散光環 */
+@keyframes mapleShockwave {
+  0% {
+    transform: scale(0.15);
+    opacity: 1;
+    border-width: 6px;
+  }
+  50% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(3.2);
+    opacity: 0;
+    border-width: 1px;
+  }
+}
+.anim-maple-shockwave {
+  position: absolute;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 4px solid #FDE047;
+  box-shadow: 0 0 25px #F59E0B, inset 0 0 20px #FEF08A;
+  animation: mapleShockwave 1.2s cubic-bezier(0.1, 0.8, 0.2, 1) forwards;
+}
+
+/* 金色楓葉升起與旋轉綻放 */
+@keyframes mapleSuccessFloat {
+  0% {
+    transform: scale(0.5) translateY(20px) rotate(-6deg);
+    opacity: 0.9;
+    filter: drop-shadow(0 0 20px #FDE047);
+  }
+  16% {
+    transform: scale(1.18) translateY(0px) rotate(4deg);
+    opacity: 1;
+    filter: drop-shadow(0 0 35px #FDE047) drop-shadow(0 0 65px #F59E0B);
+  }
+  38% {
+    transform: scale(1.0) translateY(-10px) rotate(-2deg);
+    opacity: 1;
+    filter: drop-shadow(0 0 25px #FDE047) drop-shadow(0 0 50px #F59E0B);
+  }
+  70% {
+    transform: scale(1.08) translateY(-35px) rotate(2deg);
+    opacity: 1;
+    filter: drop-shadow(0 0 40px #FDE047) drop-shadow(0 0 75px #D97706);
+  }
+  100% {
+    transform: scale(1.22) translateY(-70px) rotate(0deg);
+    opacity: 0;
+    filter: drop-shadow(0 0 50px #FEF9C3);
+  }
+}
+.anim-maple-success-leaf {
+  width: 125px;
+  height: 125px;
+  animation: mapleSuccessFloat 1.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity, filter;
+}
+
+/* 金色星光噴發粒子 */
+@keyframes mapleStarBurst {
+  0% {
+    transform: translate(0, 0) scale(0) rotate(0deg);
+    opacity: 0;
+  }
+  25% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--tx), var(--ty)) scale(1.3) rotate(var(--rot));
+    opacity: 0;
+  }
+}
+.anim-maple-star {
+  position: absolute;
+  color: #FEF08A;
+  font-size: 18px;
+  font-weight: 900;
+  text-shadow: 0 0 8px #F59E0B, 0 0 16px #D97706;
+  animation: mapleStarBurst 1.4s ease-out forwards;
+}
+
+/* --------------------------------------------------------------------------
+   楓之谷經典特效 2：黑色楓葉裂開 (Dark Shattered Maple Leaf)
+   -------------------------------------------------------------------------- */
+.anim-maple-fail-stage {
+  position: relative;
+  width: 125px;
+  height: 125px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 黑色楓葉初始浮現 */
+@keyframes mapleFailAppear {
+  0% {
+    transform: scale(0.6) translateY(10px);
+    opacity: 0.95;
+  }
+  100% {
+    transform: scale(1.0) translateY(0);
+    opacity: 1;
+  }
+}
+.anim-fail-leaf-wrap {
+  animation: mapleFailAppear 0.25s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
+}
+
+/* 鋸齒裂痕閃電裂開光芒 */
+@keyframes crackFissureFlash {
+  0% {
+    opacity: 0;
+    stroke-dashoffset: 1000;
+  }
+  20% {
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+.anim-crack-line {
+  stroke-dasharray: 1000;
+  animation: crackFissureFlash 0.45s ease-out 0.18s forwards;
+}
+
+/* 黑色楓葉左半部：沿裂痕向左下傾斜墜落化為黑煙灰燼 */
+@keyframes mapleFailLeft {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+    opacity: 1;
+  }
+  22% {
+    transform: translate(-10px, -4px) rotate(-4deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-70px, 95px) rotate(-32deg);
+    opacity: 0;
+    filter: blur(2px) grayscale(100%);
+  }
+}
+.anim-maple-split-left {
+  transform-origin: 3800px 3500px;
+  animation: mapleFailLeft 1.2s cubic-bezier(0.4, 0, 0.2, 1) 0.3s forwards;
+  will-change: transform, opacity;
+}
+
+/* 黑色楓葉右半部：沿裂痕向右下傾斜墜落化為黑煙灰燼 */
+@keyframes mapleFailRight {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+    opacity: 1;
+  }
+  22% {
+    transform: translate(10px, -4px) rotate(4deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(75px, 100px) rotate(34deg);
+    opacity: 0;
+    filter: blur(2px) grayscale(100%);
+  }
+}
+.anim-maple-split-right {
+  transform-origin: 5800px 3500px;
+  animation: mapleFailRight 1.2s cubic-bezier(0.4, 0, 0.2, 1) 0.3s forwards;
+  will-change: transform, opacity;
+}
+
+/* 失敗灰燼黑煙霧氣 */
+@keyframes smokeDissolve {
+  0% {
+    transform: scale(0.4) translateY(0);
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(1.9) translateY(-50px);
+    opacity: 0;
+  }
+}
+.anim-smoke-cloud {
+  position: absolute;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(60,60,60,0.8) 0%, rgba(30,30,30,0) 70%);
+  animation: smokeDissolve 1.1s ease-out 0.35s forwards;
+}
+
+/* --------------------------------------------------------------------------
+   楓之谷經典特效 3：詛咒爆裝震動 (Cursed Shatter & Quake)
+   -------------------------------------------------------------------------- */
+@keyframes curseScreenQuake {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  15% { transform: translate(-10px, 8px) rotate(-3deg); }
+  30% { transform: translate(12px, -9px) rotate(4deg); }
+  45% { transform: translate(-8px, -6px) rotate(-2deg); }
+  60% { transform: translate(9px, 7px) rotate(3deg); }
+  75% { transform: translate(-6px, 4px) rotate(-1deg); }
+  90% { transform: translate(4px, -3px) rotate(1deg); }
+}
+.anim-curse-quake {
+  animation: curseScreenQuake 0.55s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+/* 爆裂四散的碎片 */
+@keyframes cursePiece1 {
+  0% { transform: translate(0, 0) rotate(0deg) scale(1); opacity: 1; }
+  100% { transform: translate(-100px, -70px) rotate(-120deg) scale(0.4); opacity: 0; }
+}
+@keyframes cursePiece2 {
+  0% { transform: translate(0, 0) rotate(0deg) scale(1); opacity: 1; }
+  100% { transform: translate(105px, -65px) rotate(135deg) scale(0.4); opacity: 0; }
+}
+@keyframes cursePiece3 {
+  0% { transform: translate(0, 0) rotate(0deg) scale(1); opacity: 1; }
+  100% { transform: translate(-85px, 95px) rotate(-180deg) scale(0.3); opacity: 0; }
+}
+@keyframes cursePiece4 {
+  0% { transform: translate(0, 0) rotate(0deg) scale(1); opacity: 1; }
+  100% { transform: translate(90px, 95px) rotate(170deg) scale(0.3); opacity: 0; }
+}
+.anim-curse-piece-1 { animation: cursePiece1 0.9s cubic-bezier(0.1, 0.9, 0.2, 1) 0.25s forwards; transform-origin: center; }
+.anim-curse-piece-2 { animation: cursePiece2 0.9s cubic-bezier(0.1, 0.9, 0.2, 1) 0.25s forwards; transform-origin: center; }
+.anim-curse-piece-3 { animation: cursePiece3 0.9s cubic-bezier(0.1, 0.9, 0.2, 1) 0.25s forwards; transform-origin: center; }
+.anim-curse-piece-4 { animation: cursePiece4 0.9s cubic-bezier(0.1, 0.9, 0.2, 1) 0.25s forwards; transform-origin: center; }
+
+/* 爆裝毀損物品圖示外觀 */
+.anim-item-shatter {
+  animation: curseScreenQuake 0.5s ease-in-out;
+  filter: grayscale(100%) brightness(40%) drop-shadow(0 0 14px rgba(220, 38, 38, 0.9));
+}
+
+/* --------------------------------------------------------------------------
+   楓之谷風格結果橫幅 (Success / Fail Banner)
+   -------------------------------------------------------------------------- */
+@keyframes bannerPopIn {
+  0% { transform: scale(0.6) translateY(20px); opacity: 0; }
+  50% { transform: scale(1.05) translateY(-3px); opacity: 1; }
+  100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+.maple-banner-badge {
+  animation: bannerPopIn 0.35s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.65), inset 0 1px 2px rgba(255, 255, 255, 0.35);
+}
+
+/* --------------------------------------------------------------------------
+   楓之谷經典強化進度條 (MapleStory Enchant Progress Bar)
+   -------------------------------------------------------------------------- */
+.maple-progress-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 35;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(1px);
+  pointer-events: none;
+}
+
+.maple-progress-panel {
+  width: 86%;
+  max-width: 260px;
+  background: #2E3238;
+  border: 2px solid;
+  border-color: #8C867C #1B1E22 #15171A #9E998E;
+  border-radius: 6px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.maple-progress-track {
+  width: 100%;
+  height: 16px;
+  background: #111417;
+  border: 1px solid #4B525D;
+  border-radius: 3px;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.9);
+  position: relative;
+  overflow: hidden;
+}
+
+.maple-progress-fill {
+  height: 100%;
+  background: linear-gradient(to bottom, #7DD3FC 0%, #38BDF8 30%, #0284C7 70%, #0369A1 100%);
+  border-radius: 1px;
+  position: relative;
+  transition: width 0.05s linear;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.8);
+}
+
+.maple-progress-fill::before {
+  content: '';
+  position: absolute;
+  top: 1px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.75);
+  border-radius: 1px;
+}
+
+.maple-progress-spark {
+  position: absolute;
+  right: -2px;
+  top: -2px;
+  bottom: -2px;
+  width: 6px;
+  background: #FFFFFF;
+  box-shadow: 0 0 8px #FFFFFF, 0 0 16px #38BDF8;
+  border-radius: 2px;
+}
+
+
+
 

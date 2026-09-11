@@ -21,7 +21,18 @@
 <!-- 引入楓之谷 1,366 首官方背景音樂庫 -->
 <script src="bgm-data.js"></script>
 
+<!-- 引入 Artale 裝備與卷軸資料庫以及經典音效系統 -->
+<script src="scroll-data.js"></script>
+
 <!-- 引入 YouTube Iframe Player API -->
+<script>
+  window.onYouTubeIframeAPIReady = function() {
+    window.__ytApiReady = true;
+    if (typeof window.__initBgmPlayer === 'function') {
+      window.__initBgmPlayer();
+    }
+  };
+</script>
 <script src="https://www.youtube.com/iframe_api"></script>
 
 <script>
@@ -107,7 +118,8 @@
     <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
       <!-- 播放/暫停按鈕 -->
       <button @click="toggleBgmPlay"
-              class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-amber-500/90 hover:bg-amber-400 text-slate-950 font-black flex items-center justify-center shadow active:scale-95 transition-all text-xs sm:text-sm"
+              class="w-7 h-7 sm:w-8 sm:h-8 rounded-full text-slate-950 font-black flex items-center justify-center shadow active:scale-95 transition-all text-xs sm:text-sm"
+              :class="isPlayingBgm ? 'bg-amber-400 hover:bg-amber-300' : 'bg-yellow-400 hover:bg-yellow-300 animate-pulse ring-2 ring-yellow-400/50'"
               :title="isPlayingBgm ? '暫停音樂' : '播放音樂'">
         <span>{{ isPlayingBgm ? '⏸️' : '▶️' }}</span>
       </button>
@@ -146,14 +158,203 @@
     </div>
   </div>
 
-  <!-- 隱藏式 YouTube 背景音訊播放器容器 (固定偏離視窗以相容各瀏覽器) -->
-  <div style="position: fixed; left: -9999px; top: -9999px; width: 200px; height: 200px; pointer-events: none; opacity: 0.01; z-index: -1;">
-    <div id="youtube-bgm-player"></div>
+  <!-- 懸浮式 YouTube 背景音樂播放器 (固定在視窗右下角，避免被瀏覽器後台降頻或暫停) -->
+  <div class="fixed bottom-3 right-3 z-40 flex flex-col items-end pointer-events-auto font-tc">
+    <!-- 展開時之迷你播放器視窗 -->
+    <div v-show="showBgmVideo" class="bg-black/95 p-1.5 rounded-lg border-2 border-amber-400 shadow-2xl mb-1.5 animate-scale-in">
+      <div class="flex items-center justify-between text-[11px] text-amber-300 px-1 py-0.5 mb-1 border-b border-gray-700">
+        <span class="truncate max-w-[190px] font-bold">📺 {{ currentBgmTitle }}</span>
+        <button @click="showBgmVideo = false" class="text-gray-400 hover:text-white px-1 font-bold">✕ 收合</button>
+      </div>
+      <div id="youtube-bgm-player"></div>
+    </div>
+
+    <!-- 收合時之懸浮快捷音訊控制條 -->
+    <div v-show="!showBgmVideo"
+         class="bg-[#1F3652]/95 text-white px-2.5 py-1.5 rounded-full border border-amber-400/80 shadow-xl flex items-center gap-2 backdrop-blur-md">
+      <div class="flex items-center gap-1.5 cursor-pointer max-w-[170px] sm:max-w-[220px]" @click="toggleBgmPlay" :title="isPlayingBgm ? '點擊暫停' : '點擊開始播放音樂'">
+        <span class="text-xs" :class="{ 'animate-bounce text-amber-300': isPlayingBgm, 'text-yellow-400 animate-pulse': !isPlayingBgm }">
+          {{ isPlayingBgm ? '🎵' : '▶️' }}
+        </span>
+        <span class="text-[11px] font-bold truncate" :class="isPlayingBgm ? 'text-amber-200' : 'text-yellow-300 underline'">
+          {{ isPlayingBgm ? currentBgmTitle : '點此播放背景音樂 ▶' }}
+        </span>
+      </div>
+      <div class="h-3 w-[1px] bg-gray-600"></div>
+      <button @click="showBgmVideo = true" class="text-[10px] text-amber-300 hover:text-white font-bold px-1.5 py-0.5 rounded bg-black/40 hover:bg-black/70 border border-amber-500/40" title="展開 YouTube 影片畫面">
+        📺 畫面
+      </button>
+    </div>
   </div>
 
-  <!-- 行動端專屬導航快速切換列 (只在小於 lg 螢幕顯示，解決手機長滾動問題) -->
-  <div class="lg:hidden mb-2.5 p-1 bg-[#2C4A6F]/90 rounded border-2 border-[#547397] shadow flex items-center gap-1 font-tc">
-    <button @click="mobileViewMode = 'gacha'"
+  <!-- 場景快速導航標籤列 (自由市場 / 轉蛋機 / 神匠之垂) -->
+  <div class="mb-3 p-1.5 bg-[#1F3652]/90 rounded-lg border-2 border-[#547397] shadow-lg flex items-center justify-between gap-2 font-tc backdrop-blur-md">
+    <div class="flex items-center gap-1.5 flex-1 min-w-0">
+      <button @click="currentView = 'market'"
+              class="py-1.5 px-2.5 sm:px-3 text-center text-xs font-bold rounded transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm select-none"
+              :class="currentView === 'market' ? 'bg-gradient-to-b from-[#FFF2A3] to-[#E5A823] text-[#4A2600] border-2 border-[#92400E] font-black scale-[1.02]' : 'text-blue-100 hover:bg-white/10 border-2 border-transparent'">
+        <span>🏛️</span>
+        <span class="truncate">自由市場</span>
+      </button>
+
+      <button @click="currentView = 'gacha'"
+              class="py-1.5 px-2.5 sm:px-3 text-center text-xs font-bold rounded transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm select-none"
+              :class="currentView === 'gacha' ? 'bg-gradient-to-b from-[#FFF2A3] to-[#E5A823] text-[#4A2600] border-2 border-[#92400E] font-black scale-[1.02]' : 'text-blue-100 hover:bg-white/10 border-2 border-transparent'">
+        <span>🎰</span>
+        <span class="truncate">轉蛋機</span>
+      </button>
+
+      <button @click="currentView = 'forge'"
+              class="py-1.5 px-2.5 sm:px-3 text-center text-xs font-bold rounded transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm select-none"
+              :class="currentView === 'forge' ? 'bg-gradient-to-b from-[#FFF2A3] to-[#E5A823] text-[#4A2600] border-2 border-[#92400E] font-black scale-[1.02]' : 'text-blue-100 hover:bg-white/10 border-2 border-transparent'">
+        <span>🔨</span>
+        <span class="truncate">神匠之垂 (衝裝備)</span>
+      </button>
+    </div>
+
+    <!-- 冒險家背包快捷數量指示 -->
+    <div class="hidden sm:flex items-center gap-2 text-xs font-bold text-amber-200 shrink-0">
+      <span class="bg-black/40 px-2 py-1 rounded border border-gray-600 flex items-center gap-1">
+        <span>🎒 背包:</span>
+        <span class="text-amber-300 font-mono">{{ inventoryTotalCount }}</span>
+      </span>
+      <span class="bg-black/40 px-2 py-1 rounded border border-gray-600 flex items-center gap-1">
+        <span>⭐ 歐皇:</span>
+        <span class="text-yellow-400 font-mono">{{ luckyPullsCount }}</span>
+      </span>
+    </div>
+  </div>
+
+  <!-- ================= 場景 1: 自由市場首頁 (Free Market Hub) ================= -->
+  <div v-if="currentView === 'market'" class="flex flex-col gap-3 sm:gap-4 animate-scale-in">
+    <div class="free-market-stage p-3 sm:p-5 flex flex-col items-center">
+      
+      <!-- 頂部市場標題與公告 -->
+      <div class="w-full flex flex-col sm:flex-row items-center justify-between gap-2 mb-4 pb-2 border-b border-blue-400/30">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl sm:text-3xl">🏛️</span>
+          <div>
+            <h2 class="text-base sm:text-lg font-black text-amber-300 font-tc drop-shadow">
+              自由市場 Free Market
+            </h2>
+            <p class="text-[11px] sm:text-xs text-blue-200">
+              楓之谷冒險家聚落 · 點選 NPC 開啟專屬系統
+            </p>
+          </div>
+        </div>
+
+        <!-- 冒險家資產統計標籤 -->
+        <div class="flex items-center gap-2 flex-wrap text-xs font-bold text-amber-200">
+          <span class="px-2 py-1 bg-black/50 rounded border border-amber-500/40 shadow flex items-center gap-1">
+            <span>💰 楓幣:</span>
+            <span class="text-yellow-400 font-mono">999,999,999</span>
+          </span>
+          <span class="px-2 py-1 bg-black/50 rounded border border-blue-500/40 shadow flex items-center gap-1">
+            <span>🎒 道具:</span>
+            <span class="text-blue-300 font-mono">{{ inventoryTotalCount }} 件</span>
+          </span>
+          <span class="px-2 py-1 bg-black/50 rounded border border-purple-500/40 shadow flex items-center gap-1">
+            <span>✨ 歐皇:</span>
+            <span class="text-purple-300 font-mono">{{ luckyPullsCount }} 件</span>
+          </span>
+        </div>
+      </div>
+
+      <!-- 市場中心互動舞台 (兩大核心互動實體：轉蛋機 & GM 神匠之垂) -->
+      <div class="w-full py-4 sm:py-8 px-2 sm:px-6 flex flex-col sm:flex-row items-center justify-around gap-8 sm:gap-4">
+        
+        <!-- 實體 1: 楓之谷轉蛋機 -->
+        <div class="market-npc flex flex-col items-center group" @click="currentView = 'gacha'">
+          <!-- 對話氣泡 -->
+          <div class="maple-bubble mb-2 group-hover:scale-105 transition-transform">
+            <span>🎰 官方機率全開！點擊開啟轉蛋機</span>
+          </div>
+          
+          <!-- 轉蛋機圖示 -->
+          <div class="relative flex flex-col items-center">
+            <img src="./images/gachapon-npc.webp" 
+                 alt="楓之谷轉蛋機" 
+                 class="npc-sprite w-36 xs:w-40 sm:w-48 md:w-52 h-auto object-contain drop-shadow-2xl" />
+            <div class="npc-floor-shadow"></div>
+          </div>
+          
+          <!-- 名牌 -->
+          <div class="maple-npc-tag px-3.5 py-1 rounded-full mt-3 flex items-center gap-1.5 cursor-pointer shadow-md">
+            <span>🎰</span>
+            <span>楓之谷轉蛋機</span>
+          </div>
+
+          <button class="mt-2.5 maple-btn py-1 px-3.5 text-xs font-black shadow text-slate-950 group-hover:bg-amber-300">
+            進入轉蛋機 ▶
+          </button>
+        </div>
+
+        <!-- 中央市場傳送門石碑裝飾 -->
+        <div class="hidden md:flex flex-col items-center opacity-60 pointer-events-none select-none">
+          <img src="./images/free-market.png" alt="Free Market Arch" class="w-24 h-auto object-contain filter drop-shadow" />
+          <span class="text-[10px] text-amber-200/70 font-mono tracking-widest mt-1">1 洞 · 自由市場</span>
+        </div>
+
+        <!-- 實體 2: 神匠之垂 (GM NPC) -->
+        <div class="market-npc npc-gm flex flex-col items-center group" @click="currentView = 'forge'">
+          <!-- 對話氣泡 -->
+          <div class="maple-bubble mb-2 group-hover:scale-105 transition-transform" style="border-color: #0284C7;">
+            <span>🔨 依據 Artale 規格鍛造！點我衝裝備卷軸</span>
+          </div>
+
+          <!-- GM 圖示 -->
+          <div class="relative flex flex-col items-center">
+            <img src="./images/gm.png" 
+                 alt="神匠之垂" 
+                 class="npc-sprite w-24 xs:w-28 sm:w-32 md:w-36 h-auto object-contain drop-shadow-2xl" />
+            <div class="npc-floor-shadow"></div>
+          </div>
+
+          <!-- 名牌 -->
+          <div class="maple-npc-tag px-3.5 py-1 rounded-full mt-3 flex items-center gap-1.5 cursor-pointer shadow-md" style="border-color: #38BDF8; color: #BAE6FD;">
+            <span>⭐</span>
+            <span>神匠之垂</span>
+          </div>
+
+          <button class="mt-2.5 maple-btn maple-btn-blue py-1 px-3.5 text-xs font-black shadow text-white group-hover:bg-sky-400">
+            裝備卷軸鍛造 🔨
+          </button>
+        </div>
+
+      </div>
+
+      <!-- 底部快捷提示列 -->
+      <div class="w-full mt-4 pt-3 border-t border-blue-400/20 flex flex-wrap items-center justify-between text-xs text-blue-200 gap-2">
+        <div class="flex items-center gap-1.5">
+          <span class="text-amber-300 font-bold">💡 自由市場指南：</span>
+          <span>點擊左側「轉蛋機」抽取道具與卷軸；點擊右側「神匠之垂」為裝備衝卷強化（支援 10% / 60% / 100% / 30% 詛咒 / 70% 詛咒 / 渾沌 / 純白卷軸）！</span>
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+          <button @click="currentView = 'gacha'" class="text-amber-300 hover:underline font-bold">開啟轉蛋機</button>
+          <span>·</span>
+          <button @click="currentView = 'forge'" class="text-sky-300 hover:underline font-bold">開啟神匠之垂</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ================= 場景 2: 轉蛋機視窗 (Gachapon View) ================= -->
+  <div v-if="currentView === 'gacha'" class="flex flex-col gap-2 animate-scale-in">
+    
+    <!-- 返回自由市場按鈕列 -->
+    <div class="flex items-center justify-between mb-1">
+      <button @click="currentView = 'market'" class="maple-btn py-1 px-3 text-xs font-bold flex items-center gap-1 shadow">
+        <span>🔙 返回自由市場</span>
+      </button>
+      <span class="text-xs font-bold text-amber-200 bg-black/40 px-2 py-0.5 rounded border border-gray-600">
+        當前位置：自由市場 &gt; 楓之谷轉蛋機
+      </span>
+    </div>
+
+    <!-- 行動端專屬導航快速切換列 (只在小於 lg 螢幕顯示，解決手機長滾動問題) -->
+    <div class="lg:hidden mb-2.5 p-1 bg-[#2C4A6F]/90 rounded border-2 border-[#547397] shadow flex items-center gap-1 font-tc">
+      <button @click="mobileViewMode = 'gacha'"
             class="flex-1 py-1.5 px-1 text-center text-xs font-bold rounded transition-all flex items-center justify-center gap-1"
             :class="mobileViewMode === 'gacha' ? 'bg-gradient-to-b from-[#FFF2A3] to-[#E5A823] text-[#4A2600] shadow font-black' : 'text-blue-100 hover:bg-white/10'">
       <span>🎰</span>
@@ -593,6 +794,490 @@
       </div>
     </div>
   </div>
+  </div> <!-- 結束 currentView === 'gacha' -->
+
+  <!-- ================= 場景 3: 神匠之垂衝裝備鍛造所 (Forge View) ================= -->
+  <div v-if="currentView === 'forge'" class="flex flex-col gap-3 sm:gap-4 animate-scale-in">
+    
+    <!-- 返回自由市場按鈕列 -->
+    <div class="flex items-center justify-between mb-1">
+      <button @click="currentView = 'market'" class="maple-btn py-1 px-3 text-xs font-bold flex items-center gap-1 shadow">
+        <span>🔙 返回自由市場</span>
+      </button>
+      <span class="text-xs font-bold text-sky-200 bg-black/40 px-2 py-0.5 rounded border border-gray-600">
+        當前位置：自由市場 &gt; 神匠之垂 (衝裝備鍛造所)
+      </span>
+    </div>
+
+    <div class="maple-window">
+      <!-- 標題列 -->
+      <div class="maple-titlebar">
+        <div class="maple-title-text truncate">
+          <span>🔨</span>
+          <span>神匠之垂 - 裝備卷軸鍛造所 (Artale 官方圖鑑規格)</span>
+        </div>
+        <div class="maple-close-btn" @click="currentView = 'market'" title="返回自由市場">X</div>
+      </div>
+
+      <div class="p-2.5 sm:p-4 font-tc">
+        <!-- 頂部功能條 -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3 pb-2 border-b border-gray-300 text-xs">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="font-bold text-gray-800 flex items-center gap-1">
+              <span class="text-sm">🛡️</span>
+              <span>裝備來源：</span>
+            </span>
+            <div class="flex items-center gap-1">
+              <button @click="forgeEquipSource = 'presets'" 
+                      class="py-1 px-2.5 rounded font-bold transition-all border"
+                      :class="forgeEquipSource === 'presets' ? 'bg-amber-500 text-white border-amber-600 shadow' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100'">
+                Artale 經典神裝圖鑑
+              </button>
+              <button @click="forgeEquipSource = 'inventory'" 
+                      class="py-1 px-2.5 rounded font-bold transition-all border"
+                      :class="forgeEquipSource === 'inventory' ? 'bg-amber-500 text-white border-amber-600 shadow' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100'">
+                從轉蛋背包載入 ({{ equipInventoryList.length }})
+              </button>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <span class="text-[11px] text-gray-500 hidden sm:inline">
+              成功率：10% / 60% / 100% · 詛咒 30% / 70% (50%爆裝) · 渾沌 · 純白
+            </span>
+          </div>
+        </div>
+
+        <!-- 鍛造主體雙欄佈局 -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-4 items-start">
+          
+          <!-- 左欄：裝備挑選與裝備卡片 (5 Cols) -->
+          <div class="lg:col-span-5 flex flex-col gap-3">
+            
+            <!-- 裝備分類篩選器 (若為圖鑑模式) -->
+            <div v-if="forgeEquipSource === 'presets'" class="maple-sunken p-2 rounded flex flex-col gap-1.5">
+              <div class="flex items-center justify-between">
+                <span class="text-[11px] font-bold text-gray-700">裝備部位篩選：</span>
+                <span class="text-[10px] text-gray-500">共 {{ filteredPresets.length }} 件</span>
+              </div>
+              <div class="flex flex-wrap gap-1 max-h-24 overflow-y-auto pr-1">
+                <button v-for="cat in forgeCategories" :key="cat.id"
+                        @click="forgeCategory = cat.id"
+                        class="px-2 py-0.5 text-[11px] rounded font-bold border transition-all shrink-0"
+                        :class="forgeCategory === cat.id ? 'bg-amber-500 text-white border-amber-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'">
+                  {{ cat.name }}
+                </button>
+              </div>
+
+              <!-- 裝備關鍵字搜尋與下拉選單 -->
+              <div class="mt-1 flex flex-col gap-1">
+                <div class="relative flex items-center">
+                  <input type="text" v-model="forgeSearchText"
+                         placeholder="🔍 搜尋裝備名稱 (例: 炎魔, 楓葉, 工地, 齒輪)..."
+                         class="w-full text-xs py-1 px-2 pr-6 rounded bg-white border border-gray-400 text-gray-800 focus:outline-none focus:border-amber-500" />
+                  <button v-if="forgeSearchText" @click="forgeSearchText = ''"
+                          class="absolute right-1.5 text-gray-400 hover:text-gray-600 text-xs font-bold">✕</button>
+                </div>
+                <select v-model="selectedEquipPresetId" @change="onSelectEquipPreset"
+                        class="w-full text-xs font-bold py-1.5 px-2 rounded bg-white border border-gray-400 text-gray-800 focus:outline-none focus:border-amber-500 cursor-pointer">
+                  <option v-for="eq in filteredPresets.slice(0, 300)" :key="eq.id" :value="eq.id">
+                    [{{ eq.categoryName }}] {{ eq.name }} (Lv.{{ eq.reqLevel }}, {{ eq.slots }} 次)
+                  </option>
+                </select>
+                <div v-if="filteredPresets.length > 300" class="text-[10px] text-amber-800 text-right">
+                  * 項目過多，已顯示前 300 筆，請利用上方搜尋或分類縮小範圍
+                </div>
+              </div>
+            </div>
+
+            <!-- 背包模式裝備選單 -->
+            <div v-else class="maple-sunken p-2 rounded flex flex-col gap-1.5">
+              <span class="text-[11px] font-bold text-gray-700">從轉蛋背包選取裝備：</span>
+              <div v-if="equipInventoryList.length === 0" class="text-center py-4 text-xs text-gray-500">
+                背包目前尚無抽得裝備，請先前往轉蛋機抽卡，或切換至「經典圖鑑」！
+              </div>
+              <select v-else v-model="selectedInventoryEquipIndex" @change="onSelectInventoryEquip"
+                      class="w-full text-xs font-bold py-1.5 px-2 rounded bg-white border border-gray-400 text-gray-800 focus:outline-none focus:border-amber-500 cursor-pointer">
+                <option v-for="(item, idx) in equipInventoryList" :key="idx" :value="idx">
+                  {{ item.name }} (數量: {{ item.count }})
+                </option>
+              </select>
+            </div>
+
+            <!-- 裝備鍛造預覽卡片 (Classic Maple Item Tooltip) -->
+            <div v-if="currentForgeItem" class="maple-item-card p-3 rounded border-2 border-[#8C867C] flex flex-col gap-2 relative overflow-hidden"
+                 :class="{ 'border-red-600 bg-red-950/20': currentForgeItem.isDestroyed }">
+              
+              <!-- 爆裝碎裂警示橫幅 -->
+              <div v-if="currentForgeItem.isDestroyed" class="bg-red-600 text-white font-black text-center py-1 rounded text-xs animate-pulse tracking-wide">
+                💥 受到詛咒的魔力影響，裝備已被破壞
+              </div>
+
+              <!-- 裝備名稱與狀態 -->
+              <div class="flex items-center justify-between gap-2 border-b border-gray-400/40 pb-2">
+                <div class="flex items-center gap-2">
+                  <div class="w-12 h-12 rounded bg-amber-100/90 border border-amber-400 flex items-center justify-center text-2xl shadow-inner shrink-0 p-1"
+                       :class="{ 'anim-item-shatter': forgeEffect === 'broken' }">
+                    <img v-if="currentForgeItem.image" :src="currentForgeItem.image" :alt="currentForgeItem.name"
+                         class="w-10 h-10 object-contain" @error="currentForgeItem.image = null" />
+                    <span v-else>{{ currentForgeItem.icon }}</span>
+                  </div>
+                  <div class="min-w-0">
+                    <h3 class="text-sm font-black text-amber-950 truncate" :class="{ 'line-through text-red-700': currentForgeItem.isDestroyed }">
+                      {{ currentForgeItem.name }}
+                    </h3>
+                    <div class="text-[10px] text-gray-600 flex items-center gap-1.5 flex-wrap">
+                      <span class="bg-blue-100 text-blue-900 px-1 py-0.2 rounded font-bold">{{ currentForgeItem.categoryName }}</span>
+                      <span>等級: Lv.{{ currentForgeItem.reqLevel }}</span>
+                      <span>職業: {{ currentForgeItem.reqJob }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 升級次數儀表 (Slots Progress) -->
+              <div class="bg-amber-50/80 p-2 rounded border border-amber-300/80 flex flex-col gap-1">
+                <div class="flex items-center justify-between text-xs font-bold">
+                  <span class="text-gray-700">可使用卷軸次數：</span>
+                  <span class="font-mono text-amber-900 text-sm">
+                    {{ currentForgeItem.remainingSlots }} / {{ currentForgeItem.maxSlots }}
+                  </span>
+                </div>
+
+                <!-- 圓點次數條 -->
+                <div class="flex items-center gap-1 mt-0.5">
+                  <div v-for="i in currentForgeItem.maxSlots" :key="i"
+                       class="flex-1 h-2 rounded-full border border-gray-400 transition-all"
+                       :class="i <= currentForgeItem.successCount ? 'bg-yellow-400 border-yellow-600 shadow-sm' : (i <= currentForgeItem.successCount + currentForgeItem.failCount ? 'bg-gray-400 border-gray-500' : 'bg-white')">
+                  </div>
+                </div>
+
+                <div class="flex items-center justify-between text-[10px] text-gray-600 mt-0.5">
+                  <span class="text-emerald-700 font-bold">🌟 成功: {{ currentForgeItem.successCount }} 次</span>
+                  <span class="text-rose-700 font-bold">💨 失敗: {{ currentForgeItem.failCount }} 次</span>
+                  <span class="text-blue-700 font-bold">剩餘: {{ currentForgeItem.remainingSlots }} 次</span>
+                </div>
+              </div>
+
+              <!-- 屬性數值列表 -->
+              <div class="bg-white/80 p-2 rounded border border-gray-300 flex flex-col gap-1 text-xs">
+                <div class="font-bold text-gray-700 pb-1 border-b border-gray-200 flex items-center justify-between">
+                  <span>裝備能力值：</span>
+                  <span class="text-[10px] text-amber-700">括號為卷軸強化加成</span>
+                </div>
+                <div class="grid grid-cols-2 gap-x-2 gap-y-1 py-1">
+                  <div v-for="(val, statKey) in currentForgeItem.currentStats" :key="statKey"
+                       class="flex items-center justify-between border-b border-gray-100 py-0.5">
+                    <span class="text-gray-600">{{ getStatName(statKey) }}:</span>
+                    <span class="font-bold text-gray-900 flex items-center gap-1 font-mono">
+                      <span>{{ val }}</span>
+                      <span v-if="currentForgeItem.bonusStats[statKey]" 
+                            class="text-[11px] font-black"
+                            :class="currentForgeItem.bonusStats[statKey] > 0 ? 'text-emerald-600' : 'text-red-500'">
+                        ({{ currentForgeItem.bonusStats[statKey] > 0 ? '+' + currentForgeItem.bonusStats[statKey] : currentForgeItem.bonusStats[statKey] }})
+                      </span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 操作輔助按鈕組 -->
+              <div class="flex items-center gap-2 pt-1">
+                <button @click="resetCurrentForgeItem" 
+                        class="flex-1 maple-btn maple-btn-red py-1 text-xs font-bold"
+                        title="重置此裝備次數與強化數值回原始狀態">
+                  🔄 一鍵重置 (洗白)
+                </button>
+                <button @click="onSelectEquipPreset" 
+                        class="flex-1 maple-btn py-1 text-xs font-bold"
+                        title="重新生成一件全新同款裝備">
+                  ✨ 重新鍛造一件
+                </button>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- 右欄：適用卷軸選擇、鐵砧敲擊與日誌 (7 Cols) -->
+          <div class="lg:col-span-7 flex flex-col gap-3">
+            
+            <!-- 適用卷軸清單面板 -->
+            <div class="maple-sunken p-2.5 sm:p-3 rounded flex flex-col gap-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-gray-800 flex items-center gap-1">
+                  <span>📜</span>
+                  <span>適用於【{{ currentForgeItem?.categoryName }}】的卷軸 (共 {{ applicableScrolls.length }} 款)：</span>
+                </span>
+                <span class="text-[10px] text-gray-500">點選卷軸以放置鍛造</span>
+              </div>
+
+              <!-- 卷軸卡片網格 (滾動容器) -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-56 overflow-y-auto pr-1">
+                <div v-for="scroll in applicableScrolls" :key="scroll.id"
+                     @click="selectScroll(scroll)"
+                     class="scroll-item-card flex items-center justify-between gap-1.5 select-none"
+                     :class="{ 'is-selected': selectedScroll?.id === scroll.id }">
+                  <div class="flex items-center gap-1.5 min-w-0">
+                    <img :src="scroll.image" :alt="scroll.name" class="w-6 h-6 object-contain shrink-0" />
+                    <div class="min-w-0">
+                      <div class="text-xs font-bold text-gray-900 truncate"
+                           :class="{ 'text-purple-700': scroll.curseRate > 0, 'text-blue-700': scroll.isSpecial }">
+                        {{ scroll.name }}
+                      </div>
+                      <div class="text-[10px] text-gray-500 flex items-center gap-1">
+                        <span class="font-bold text-amber-700">機率 {{ scroll.successRate }}%</span>
+                        <span v-if="scroll.curseRate > 0" class="text-rose-600 font-bold">詛咒 50% 爆</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <span class="text-xs shrink-0 font-bold" :class="selectedScroll?.id === scroll.id ? 'text-amber-800' : 'text-gray-400'">
+                    {{ selectedScroll?.id === scroll.id ? '✔ 選定' : '點擊' }}
+                  </span>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- 衝卷鍛造操作台 (Anvil Stage) -->
+            <div class="p-3 sm:p-4 rounded border-2 border-[#8C867C] bg-gradient-to-b from-[#F5F2EA] to-[#E5DFC5] shadow-inner flex flex-col items-center relative overflow-hidden">
+              
+              <!-- 楓之谷經典強化進度條浮層 (MapleStory Enchant Progress Bar) -->
+              <div v-if="isForging" class="maple-progress-overlay">
+                <div class="maple-progress-panel">
+                  <div class="flex items-center justify-between text-xs text-amber-200 font-bold px-0.5">
+                    <span class="flex items-center gap-1.5">
+                      <span class="animate-spin text-[11px]">⚙️</span>
+                      <span>正在使用卷軸...</span>
+                    </span>
+                    <span class="font-mono text-cyan-300 font-black">{{ Math.floor(forgeProgress) }}%</span>
+                  </div>
+                  <!-- 進度槽 -->
+                  <div class="maple-progress-track">
+                    <div class="maple-progress-fill" :style="{ width: forgeProgress + '%' }">
+                      <div class="maple-progress-spark"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 楓之谷經典衝裝特效演出浮層 (MapleStory Leaf Overlay) -->
+              <!-- 1. 衝卷大成功：金色閃耀楓葉升起綻放、星光粒子噴射 -->
+              <div v-if="forgeEffect === 'success'" class="maple-stage-overlay bg-amber-400/15">
+                <!-- 金色衝擊波擴散環 -->
+                <div class="anim-maple-shockwave"></div>
+
+                <!-- 8 顆向外飛散閃爍的金色星芒粒子 -->
+                <span class="anim-maple-star" style="--tx: -75px; --ty: -65px; --rot: 45deg;">✦</span>
+                <span class="anim-maple-star" style="--tx: 80px; --ty: -60px; --rot: -45deg;">★</span>
+                <span class="anim-maple-star" style="--tx: -90px; --ty: 10px; --rot: 90deg;">✨</span>
+                <span class="anim-maple-star" style="--tx: 85px; --ty: 15px; --rot: -90deg;">✦</span>
+                <span class="anim-maple-star" style="--tx: -55px; --ty: 70px; --rot: 120deg;">★</span>
+                <span class="anim-maple-star" style="--tx: 60px; --ty: 75px; --rot: -120deg;">✨</span>
+                <span class="anim-maple-star" style="--tx: 0px; --ty: -90px; --rot: 180deg;">✦</span>
+                <span class="anim-maple-star" style="--tx: 0px; --ty: 85px; --rot: 0deg;">★</span>
+
+                <!-- 楓之谷正統五芒金色楓葉 -->
+                <div class="anim-maple-success-leaf flex items-center justify-center">
+                  <svg viewBox="2800 300 4000 4200" class="w-full h-full filter drop-shadow">
+                    <defs>
+                      <linearGradient id="goldGradMaple" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="#FFF9C4" />
+                        <stop offset="25%" stop-color="#FDE047" />
+                        <stop offset="60%" stop-color="#F59E0B" />
+                        <stop offset="100%" stop-color="#D97706" />
+                      </linearGradient>
+                      <filter id="goldGlowEff" x="-20%" y="-20%" width="140%" height="140%">
+                        <feDropShadow dx="0" dy="0" stdDeviation="70" flood-color="#FDE047" flood-opacity="0.9" />
+                        <feDropShadow dx="0" dy="0" stdDeviation="150" flood-color="#F59E0B" flood-opacity="0.75" />
+                      </filter>
+                    </defs>
+                    <!-- 楓葉本體 -->
+                    <path fill="url(#goldGradMaple)" stroke="#FFFDE7" stroke-width="80" filter="url(#goldGlowEff)"
+                          d="M4890 4430l-45-863a95 95 0 0 1 111-98l859 151-116-320a65 65 0 0 1 20-73l941-762-212-99a65 65 0 0 1-34-79l186-572-542 115a65 65 0 0 1-73-38l-105-247-423 454a65 65 0 0 1-111-57l204-1052-327 189a65 65 0 0 1-91-27l-332-652-332 652a65 65 0 0 1-91 27l-327-189 204 1052a65 65 0 0 1-111 57l-423-454-105 247a65 65 0 0 1-73 38l-542-115 186 572a65 65 0 0 1-34 79l-212 99 941 762a65 65 0 0 1 20 73l-116 320 859-151a95 95 0 0 1 111 98l-45 863z" />
+                    <!-- 楓葉黃金葉脈光紋 -->
+                    <path d="M4800 3700 L4800 1200 M4800 2700 L3800 1900 M4800 2700 L5800 1900 M4800 3200 L3400 2700 M4800 3200 L6200 2700"
+                          stroke="#FFFBEB" stroke-width="45" stroke-linecap="round" opacity="0.65" />
+                  </svg>
+                </div>
+
+                <!-- 經典楓之谷成功成就橫幅 -->
+                <div class="maple-banner-badge mt-1.5 bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 border-2 border-yellow-100 text-yellow-950 font-black px-4 py-1 rounded-full text-xs shadow-xl flex items-center gap-1.5 tracking-wider">
+                  <span class="text-sm">🍁</span>
+                  <span>卷軸閃爍了一下，神秘的力量傳到了裝備身上。</span>
+                  <span class="text-sm">✨</span>
+                </div>
+              </div>
+
+              <!-- 2. 衝卷失敗：黑色楓葉裂開兩半、鋸齒電光、灰燼煙霧 -->
+              <div v-if="forgeEffect === 'failure'" class="maple-stage-overlay bg-gray-950/20">
+                <div class="anim-maple-fail-stage anim-fail-leaf-wrap">
+                  <!-- 灰燼煙塵霧氣 -->
+                  <div class="anim-smoke-cloud" style="left: 35px; top: 35px;"></div>
+
+                  <svg viewBox="2800 300 4000 4200" class="w-full h-full filter drop-shadow-md">
+                    <defs>
+                      <linearGradient id="darkGradMaple" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="#4B5563" />
+                        <stop offset="40%" stop-color="#1F2937" />
+                        <stop offset="100%" stop-color="#111827" />
+                      </linearGradient>
+                      <clipPath id="leftCrackClip">
+                        <polygon points="2800,300 4800,300 4750,1200 4880,1800 4730,2500 4860,3200 4780,3900 4800,4500 2800,4500" />
+                      </clipPath>
+                      <clipPath id="rightCrackClip">
+                        <polygon points="6800,300 4800,300 4750,1200 4880,1800 4730,2500 4860,3200 4780,3900 4800,4500 6800,4500" />
+                      </clipPath>
+                    </defs>
+
+                    <!-- 左半片黑色楓葉 (沿裂紋向左下方傾斜下墜) -->
+                    <g clip-path="url(#leftCrackClip)" class="anim-maple-split-left">
+                      <path fill="url(#darkGradMaple)" stroke="#4B5563" stroke-width="70"
+                            d="M4890 4430l-45-863a95 95 0 0 1 111-98l859 151-116-320a65 65 0 0 1 20-73l941-762-212-99a65 65 0 0 1-34-79l186-572-542 115a65 65 0 0 1-73-38l-105-247-423 454a65 65 0 0 1-111-57l204-1052-327 189a65 65 0 0 1-91-27l-332-652-332 652a65 65 0 0 1-91 27l-327-189 204 1052a65 65 0 0 1-111 57l-423-454-105 247a65 65 0 0 1-73 38l-542-115 186 572a65 65 0 0 1-34 79l-212 99 941 762a65 65 0 0 1 20 73l-116 320 859-151a95 95 0 0 1 111 98l-45 863z" />
+                    </g>
+
+                    <!-- 右半片黑色楓葉 (沿裂紋向右下方傾斜下墜) -->
+                    <g clip-path="url(#rightCrackClip)" class="anim-maple-split-right">
+                      <path fill="url(#darkGradMaple)" stroke="#4B5563" stroke-width="70"
+                            d="M4890 4430l-45-863a95 95 0 0 1 111-98l859 151-116-320a65 65 0 0 1 20-73l941-762-212-99a65 65 0 0 1-34-79l186-572-542 115a65 65 0 0 1-73-38l-105-247-423 454a65 65 0 0 1-111-57l204-1052-327 189a65 65 0 0 1-91-27l-332-652-332 652a65 65 0 0 1-91 27l-327-189 204 1052a65 65 0 0 1-111 57l-423-454-105 247a65 65 0 0 1-73 38l-542-115 186 572a65 65 0 0 1-34 79l-212 99 941 762a65 65 0 0 1 20 73l-116 320 859-151a95 95 0 0 1 111 98l-45 863z" />
+                    </g>
+
+                    <!-- 中央鋸齒電光裂紋閃爍 -->
+                    <polyline points="4800,300 4750,1200 4880,1800 4730,2500 4860,3200 4780,3900 4800,4500"
+                              class="anim-crack-line" fill="none" stroke="#F87171" stroke-width="90" stroke-linecap="round" />
+                  </svg>
+                </div>
+
+                <!-- 失敗提示橫幅 -->
+                <div class="maple-banner-badge mt-1.5 bg-gradient-to-r from-gray-700 via-gray-800 to-gray-700 border-2 border-gray-500 text-gray-200 font-bold px-4 py-1 rounded-full text-xs shadow-xl flex items-center gap-1.5 tracking-wider">
+                  <span class="text-sm">💨</span>
+                  <span>卷軸閃爍了一下，但沒有任何變化。</span>
+                </div>
+              </div>
+
+              <!-- 3. 詛咒爆裝：詛咒紅光反噬、四散碎裂、鐵砧劇烈震動 -->
+              <div v-if="forgeEffect === 'broken'" class="maple-stage-overlay bg-red-950/35 anim-curse-quake">
+                <div class="relative w-28 h-28 flex items-center justify-center">
+                  <!-- 4 個爆裂四散的黑紅詛咒楓葉碎片 -->
+                  <svg viewBox="2800 300 4000 4200" class="absolute w-20 h-20 anim-curse-piece-1">
+                    <path fill="#1F2937" stroke="#EF4444" stroke-width="90" d="M4890 4430l-45-863a95 95 0 0 1 111-98l859 151-116-320z"/>
+                  </svg>
+                  <svg viewBox="2800 300 4000 4200" class="absolute w-20 h-20 anim-curse-piece-2">
+                    <path fill="#1F2937" stroke="#EF4444" stroke-width="90" d="M4800 300 L5600 1500 L4800 2200z"/>
+                  </svg>
+                  <svg viewBox="2800 300 4000 4200" class="absolute w-20 h-20 anim-curse-piece-3">
+                    <path fill="#111827" stroke="#DC2626" stroke-width="90" d="M2900 2400 L3800 3500 L3400 4200z"/>
+                  </svg>
+                  <svg viewBox="2800 300 4000 4200" class="absolute w-20 h-20 anim-curse-piece-4">
+                    <path fill="#111827" stroke="#DC2626" stroke-width="90" d="M6600 2400 L5800 3500 L6200 4200z"/>
+                  </svg>
+                  <div class="text-3xl animate-ping text-red-500">💥</div>
+                </div>
+
+                <!-- 詛咒碎裂損毀橫幅 -->
+                <div class="maple-banner-badge mt-1.5 bg-gradient-to-r from-red-800 via-red-900 to-red-800 border-2 border-red-400 text-red-100 font-black px-4 py-1 rounded-full text-xs shadow-2xl flex items-center gap-1.5 tracking-wider">
+                  <span class="text-sm">💥</span>
+                  <span>卷軸閃爍了一下，受到詛咒的魔力影響，裝備被破壞了。</span>
+                </div>
+              </div>
+
+              <!-- 鐵砧核心操作台 -->
+              <div class="w-full flex items-center justify-around py-2">
+                
+                <!-- 放置之裝備 -->
+                <div class="flex flex-col items-center gap-1">
+                  <span class="text-[11px] font-bold text-gray-700">目標裝備</span>
+                  <div class="forge-equip-slot flex items-center justify-center p-1">
+                    <img v-if="currentForgeItem?.image" :src="currentForgeItem.image" :alt="currentForgeItem.name"
+                         class="w-10 h-10 object-contain drop-shadow" @error="currentForgeItem.image = null" />
+                    <span v-else class="text-3xl filter drop-shadow">{{ currentForgeItem?.icon || '❓' }}</span>
+                  </div>
+                  <span class="text-xs font-bold text-gray-900 max-w-[100px] truncate text-center">
+                    {{ currentForgeItem?.name }}
+                  </span>
+                </div>
+
+                <!-- 敲擊圖示 / 箭頭 -->
+                <div class="flex flex-col items-center gap-1">
+                  <span class="text-2xl" :class="{ 'animate-bounce': isForging }">🔨</span>
+                  <span class="text-[10px] text-amber-800 font-bold">點擊下方鍛造</span>
+                </div>
+
+                <!-- 放置之卷軸 -->
+                <div class="flex flex-col items-center gap-1">
+                  <span class="text-[11px] font-bold text-gray-700">使用卷軸</span>
+                  <div class="forge-equip-slot" :class="{ 'border-dashed border-gray-400 bg-white/50': !selectedScroll }">
+                    <img v-if="selectedScroll" :src="selectedScroll.image" :alt="selectedScroll.name" class="w-10 h-10 object-contain" />
+                    <span v-else class="text-gray-400 text-xs">未選擇</span>
+                  </div>
+                  <span class="text-xs font-bold text-amber-950 max-w-[120px] truncate text-center">
+                    {{ selectedScroll?.name || '請點選上方卷軸' }}
+                  </span>
+                </div>
+
+              </div>
+
+              <!-- 當前選定卷軸資訊提示 -->
+              <div v-if="selectedScroll" class="w-full mt-2 p-2 bg-white/90 rounded border border-amber-300 text-xs text-gray-800 flex flex-col gap-1">
+                <div class="flex items-center justify-between font-bold">
+                  <span class="text-amber-900">{{ selectedScroll.name }}</span>
+                  <span class="text-emerald-700 font-mono">成功率: {{ selectedScroll.successRate }}%</span>
+                </div>
+                <div class="text-[11px] text-gray-600">
+                  <span v-if="selectedScroll.desc">{{ selectedScroll.desc }}</span>
+                  <span v-else>
+                    成功效果：<span class="text-blue-700 font-bold">{{ getScrollBonusDesc(selectedScroll) }}</span>
+                  </span>
+                  <span v-if="selectedScroll.curseRate > 0" class="text-rose-600 font-bold ml-1">
+                    (失敗時有 50% 機率直接爆裝損毀！)
+                  </span>
+                </div>
+              </div>
+
+              <!-- 衝卷鍛造按鈕 -->
+              <button @click="applyScroll"
+                      :disabled="isForging || !currentForgeItem || !selectedScroll || currentForgeItem.isDestroyed"
+                      class="mt-3 w-full py-2.5 px-4 text-sm sm:text-base font-black rounded-lg transition-all border-2 shadow-lg flex items-center justify-center gap-2 cursor-pointer select-none"
+                      :class="(!currentForgeItem || !selectedScroll || currentForgeItem.isDestroyed)
+                        ? 'bg-gray-300 text-gray-500 border-gray-400 cursor-not-allowed'
+                        : 'bg-gradient-to-b from-[#FFF2A3] to-[#E5A823] text-[#4A2600] border-[#92400E] hover:brightness-105 active:scale-98'">
+                <span>🔨</span>
+                <span>{{ isForging ? '正在使用卷軸...' : (currentForgeItem?.isDestroyed ? '裝備已破壞' : '使用卷軸') }}</span>
+              </button>
+
+            </div>
+
+            <!-- 鍛造紀錄歷程日誌 (Forge Logs) -->
+            <div class="maple-sunken p-2.5 rounded flex flex-col gap-1 text-xs">
+              <div class="flex items-center justify-between font-bold text-gray-700 pb-1 border-b border-gray-300">
+                <span class="flex items-center gap-1">
+                  <span>📜</span>
+                  <span>衝卷鍛造日誌 (即時紀錄)：</span>
+                </span>
+                <button @click="forgeLogs = []" class="text-[10px] text-gray-500 hover:text-red-600 underline">清空日誌</button>
+              </div>
+
+              <div v-if="forgeLogs.length === 0" class="text-center py-4 text-gray-500 text-xs">
+                尚未有衝卷紀錄，選定卷軸並點擊「使用卷軸鍛造」開始！
+              </div>
+
+              <div v-else class="max-h-36 overflow-y-auto flex flex-col gap-1 pr-1 font-mono text-[11px]">
+                <div v-for="(log, idx) in forgeLogs" :key="idx"
+                     class="p-1 rounded flex items-start gap-1.5 border"
+                     :class="log.type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : (log.type === 'broken' ? 'bg-rose-100 border-rose-400 text-rose-900 font-bold' : 'bg-gray-100 border-gray-200 text-gray-700')">
+                  <span class="text-gray-400 shrink-0 text-[10px]">[{{ log.time }}]</span>
+                  <span class="break-all">{{ log.text }}</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  </div> <!-- 結束 currentView === 'forge' -->
 
   <!-- ================= 楓之谷 NPC 對話框風格開獎彈窗 (完美防溢出、單一捲軸容器、直覺關閉) ================= -->
   <div v-if="showResultModal"
@@ -864,6 +1549,9 @@ createApp({
     const allPools = ref(window.GACHA_POOLS || GACHA_POOLS);
     const selectedPoolId = ref('weekly_raid_2'); // 預設突襲重置券Ⅱ
 
+    // 當前主場景視圖 ('market' | 'gacha' | 'forge')，預設一進入為自由市場首頁
+    const currentView = ref('market');
+
     const activePool = computed(() => {
       return allPools.value.find(p => p.id === selectedPoolId.value) || allPools.value[0];
     });
@@ -1092,7 +1780,12 @@ createApp({
 
     onMounted(() => {
       loadData();
-      initYouTubeBgm();
+      window.__initBgmPlayer = initYouTubeBgm;
+      if (window.YT && window.YT.Player) {
+        initYouTubeBgm();
+      } else {
+        setTimeout(initYouTubeBgm, 500);
+      }
       window.addEventListener('click', handleFirstUserInteraction, { once: true });
       window.addEventListener('touchstart', handleFirstUserInteraction, { once: true });
     });
@@ -1105,6 +1798,7 @@ createApp({
     const isPlayingBgm = ref(false);
     const bgmVolume = ref(45);
     const isBgmModalOpen = ref(false);
+    const showBgmVideo = ref(false);
     const bgmSearchQuery = ref('');
     const bgmSelectedCategory = ref('classic');
     const bgmLoopMode = ref('shuffle'); // 'shuffle' (隨機輪播) | 'single' (單曲循環)
@@ -1185,12 +1879,22 @@ createApp({
           ytPlayer.playVideo();
           isPlayingBgm.value = true;
         } catch(e){}
+      } else {
+        initYouTubeBgm();
       }
     }
 
     function toggleBgmPlay() {
       if (!ytPlayer || !ytPlayerReady) {
         initYouTubeBgm();
+        setTimeout(() => {
+          if (ytPlayer && typeof ytPlayer.playVideo === 'function') {
+            try {
+              ytPlayer.playVideo();
+              isPlayingBgm.value = true;
+            } catch(e){}
+          }
+        }, 500);
         return;
       }
       try {
@@ -1245,8 +1949,7 @@ createApp({
       }
 
       if (!window.YT || !window.YT.Player) {
-        // YouTube API 仍在加載，延遲重試
-        setTimeout(initYouTubeBgm, 300);
+        setTimeout(initYouTubeBgm, 400);
         return;
       }
 
@@ -1254,24 +1957,29 @@ createApp({
 
       try {
         const initialVideoId = currentBgm.value ? currentBgm.value.yt : 's2_MAplvHeQ';
+        const originVal = window.location.protocol === 'file:' ? 'https://www.youtube.com' : window.location.origin;
         ytPlayer = new window.YT.Player('youtube-bgm-player', {
-          height: '200',
-          width: '200',
+          height: '135',
+          width: '240',
           videoId: initialVideoId,
+          host: 'https://www.youtube.com',
           playerVars: {
             autoplay: 1,
-            controls: 0,
+            controls: 1,
             loop: 0,
             modestbranding: 1,
             playsinline: 1,
-            rel: 0
+            rel: 0,
+            origin: originVal,
+            enablejsapi: 1
           },
           events: {
             onReady: (event) => {
               ytPlayerReady = true;
               event.target.setVolume(bgmVolume.value);
-              // 嘗試自動播放
-              event.target.playVideo();
+              try {
+                event.target.playVideo();
+              } catch(err){}
             },
             onStateChange: (event) => {
               if (event.data === window.YT.PlayerState.PLAYING) {
@@ -1292,9 +2000,9 @@ createApp({
                 }
               }
             },
-            onError: () => {
-              // 若個別 YouTube 影片不可用，自動切換至下一首
-              setTimeout(playRandomBgm, 1000);
+            onError: (err) => {
+              console.warn('YouTube BGM 播放異常，自動嘗試切換下一首:', err);
+              setTimeout(playRandomBgm, 800);
             }
           }
         });
@@ -1304,15 +2012,417 @@ createApp({
     }
 
     function handleFirstUserInteraction() {
-      if (ytPlayer && ytPlayerReady && !isPlayingBgm.value) {
+      if (!ytPlayer) {
+        initYouTubeBgm();
+      } else if (ytPlayer && ytPlayerReady && !isPlayingBgm.value) {
         try {
           ytPlayer.playVideo();
-          isPlayingBgm.value = true;
         } catch(e){}
       }
     }
 
+    // ========== 神匠之垂 衝裝備鍛造系統邏輯 (Artale 100% 官方圖鑑規格) ==========
+    const forgeEquipSource = ref('presets'); // 'presets' | 'inventory'
+    const forgeCategory = ref('all');
+    const forgeSearchText = ref('');
+    const selectedEquipPresetId = ref('artale_eq_1760'); // 預設官方楓葉拳套
+    const currentForgeItem = ref(null);
+    const selectedScroll = ref(null);
+    const selectedInventoryEquipIndex = ref(0);
+    const isForging = ref(false);
+    const forgeProgress = ref(0);
+    let progressAnimFrame = null;
+    const forgeEffect = ref(null); // 'success' | 'failure' | 'broken'
+    let forgeTimer = null;
+    const forgeLogs = ref([]);
+
+    const forgeCategories = [
+      { id: 'all', name: '全部' },
+      { id: 'claw', name: '拳套' },
+      { id: 'gloves', name: '手套' },
+      { id: 'hat', name: '頭盔' },
+      { id: 'overall', name: '套服' },
+      { id: 'top', name: '上衣' },
+      { id: 'bottom', name: '下衣' },
+      { id: 'shoes', name: '鞋子' },
+      { id: 'cape', name: '披風' },
+      { id: 'shield', name: '盾牌' },
+      { id: 'earrings', name: '耳環' },
+      { id: 'eye-accessory', name: '眼飾' },
+      { id: 'face-accessory', name: '臉飾' },
+      { id: 'belt', name: '腰帶' },
+      { id: 'pendant', name: '項鍊' },
+      { id: 'ring', name: '戒指' },
+      { id: 'one-handed-sword', name: '單手劍' },
+      { id: 'two-handed-sword', name: '雙手劍' },
+      { id: 'one-handed-axe', name: '單手斧' },
+      { id: 'two-handed-axe', name: '雙手斧' },
+      { id: 'one-handed-blunt', name: '單手棍' },
+      { id: 'two-handed-blunt', name: '雙手棍' },
+      { id: 'spear', name: '槍' },
+      { id: 'polearm', name: '矛' },
+      { id: 'wand', name: '短杖' },
+      { id: 'staff', name: '長杖' },
+      { id: 'bow', name: '弓' },
+      { id: 'crossbow', name: '弩' },
+      { id: 'dagger', name: '匕首' },
+      { id: 'knuckle', name: '指虎' },
+      { id: 'gun', name: '火槍' }
+    ];
+
+    const filteredPresets = computed(() => {
+      const list = window.ARTALE_EQUIPMENTS || (typeof ARTALE_EQUIPMENTS !== 'undefined' ? ARTALE_EQUIPMENTS : []);
+      let res = list;
+      if (forgeCategory.value !== 'all') {
+        res = res.filter(e => e.category === forgeCategory.value);
+      }
+      if (forgeSearchText.value && forgeSearchText.value.trim()) {
+        const q = forgeSearchText.value.trim().toLowerCase();
+        res = res.filter(e => (e.name && e.name.toLowerCase().includes(q)) || (e.nameEn && e.nameEn.toLowerCase().includes(q)));
+      }
+      return res;
+    });
+
+    const equipInventoryList = computed(() => {
+      return inventory.value.filter(i => {
+        const name = i.name;
+        return !name.includes('卷軸') && !name.includes('乳') && !name.includes('露') && !name.includes('藥水') && !name.includes('箱') && !name.includes('椅子') && !name.includes('券') && !name.includes('蛋');
+      });
+    });
+
+    const applicableScrolls = computed(() => {
+      if (!currentForgeItem.value) return [];
+      const list = window.ARTALE_SCROLLS || (typeof ARTALE_SCROLLS !== 'undefined' ? ARTALE_SCROLLS : []);
+      const itemCat = currentForgeItem.value.category;
+      const itemType = currentForgeItem.value.type;
+      return list.filter(s => {
+        if (s.targetType === 'all') return true;
+        if (s.targetType === itemCat) return true;
+        if (s.type && itemType && s.type === itemType) return true;
+        return false;
+      });
+    });
+
+    function initForgeItemFromPreset(id) {
+      const list = window.ARTALE_EQUIPMENTS || (typeof ARTALE_EQUIPMENTS !== 'undefined' ? ARTALE_EQUIPMENTS : []);
+      const eq = list.find(e => e.id === id) || list[0];
+      if (!eq) return;
+      selectedEquipPresetId.value = eq.id;
+      currentForgeItem.value = {
+        id: eq.id,
+        name: eq.name,
+        baseName: eq.name,
+        nameEn: eq.nameEn,
+        category: eq.category,
+        categoryName: eq.categoryName,
+        type: eq.type,
+        reqLevel: eq.reqLevel,
+        reqJob: eq.reqJob,
+        maxSlots: eq.slots,
+        remainingSlots: eq.slots,
+        successCount: 0,
+        failCount: 0,
+        isDestroyed: false,
+        icon: eq.icon,
+        image: eq.image,
+        baseStats: { ...eq.stats },
+        currentStats: { ...eq.stats },
+        bonusStats: {}
+      };
+      selectedScroll.value = null;
+      forgeEffect.value = null;
+    }
+
+    function onSelectEquipPreset() {
+      initForgeItemFromPreset(selectedEquipPresetId.value);
+      if (window.artaleSound) window.artaleSound.playClick();
+    }
+
+    function onSelectInventoryEquip() {
+      const eq = equipInventoryList.value[selectedInventoryEquipIndex.value];
+      if (!eq) return;
+      const list = window.ARTALE_EQUIPMENTS || (typeof ARTALE_EQUIPMENTS !== 'undefined' ? ARTALE_EQUIPMENTS : []);
+      
+      // 優先精確比對 Artale 官方裝備資料庫
+      const matchedOfficial = list.find(e => e.name === eq.name || e.nameEn === eq.name || (eq.name && eq.name.includes(e.name)));
+      if (matchedOfficial) {
+        currentForgeItem.value = {
+          id: 'inv_' + Date.now(),
+          name: matchedOfficial.name,
+          baseName: matchedOfficial.name,
+          nameEn: matchedOfficial.nameEn,
+          category: matchedOfficial.category,
+          categoryName: matchedOfficial.categoryName,
+          type: matchedOfficial.type,
+          reqLevel: matchedOfficial.reqLevel,
+          reqJob: matchedOfficial.reqJob,
+          maxSlots: matchedOfficial.slots,
+          remainingSlots: matchedOfficial.slots,
+          successCount: 0,
+          failCount: 0,
+          isDestroyed: false,
+          icon: matchedOfficial.icon,
+          image: matchedOfficial.image,
+          baseStats: { ...matchedOfficial.stats },
+          currentStats: { ...matchedOfficial.stats },
+          bonusStats: {}
+        };
+      } else {
+        // 若為未登錄之自訂裝備，依關鍵字指派部位與預設槽數
+        let cat = 'one-handed-sword';
+        let catName = '武器';
+        if (eq.name.includes('拳套') || eq.name.includes('神拳')) { cat = 'claw'; catName = '拳套'; }
+        else if (eq.name.includes('手套') || eq.name.includes('護手')) { cat = 'gloves'; catName = '手套'; }
+        else if (eq.name.includes('頭盔') || eq.name.includes('頭巾')) { cat = 'hat'; catName = '頭盔'; }
+        else if (eq.name.includes('雙手劍')) { cat = 'two-handed-sword'; catName = '雙手劍'; }
+        else if (eq.name.includes('劍')) { cat = 'one-handed-sword'; catName = '單手劍'; }
+        else if (eq.name.includes('弓')) { cat = 'bow'; catName = '弓'; }
+        else if (eq.name.includes('弩')) { cat = 'crossbow'; catName = '弩'; }
+        else if (eq.name.includes('短杖')) { cat = 'wand'; catName = '短杖'; }
+        else if (eq.name.includes('長杖')) { cat = 'staff'; catName = '長杖'; }
+        else if (eq.name.includes('槍')) { cat = 'spear'; catName = '槍'; }
+        else if (eq.name.includes('矛')) { cat = 'polearm'; catName = '矛'; }
+        else if (eq.name.includes('披風')) { cat = 'cape'; catName = '披風'; }
+        else if (eq.name.includes('鞋')) { cat = 'shoes'; catName = '鞋子'; }
+        else if (eq.name.includes('盾')) { cat = 'shield'; catName = '盾牌'; }
+        else if (eq.name.includes('耳環')) { cat = 'earrings'; catName = '耳環'; }
+        else if (eq.name.includes('套服') || eq.name.includes('浴袍') || eq.name.includes('桑拿')) { cat = 'overall'; catName = '套服'; }
+        else if (eq.name.includes('上衣')) { cat = 'top'; catName = '上衣'; }
+        else if (eq.name.includes('下衣') || eq.name.includes('褲')) { cat = 'bottom'; catName = '下衣'; }
+
+        const defaultStats = (cat.includes('sword') || cat === 'claw' || cat === 'bow' || cat === 'crossbow' || cat === 'spear' || cat === 'polearm') 
+          ? { atk: 55 } 
+          : (cat === 'wand' || cat === 'staff' ? { matk: 60 } : { def: 20 });
+
+        currentForgeItem.value = {
+          id: 'inv_' + Date.now(),
+          name: eq.name,
+          baseName: eq.name,
+          category: cat,
+          categoryName: catName,
+          type: cat.toUpperCase(),
+          reqLevel: 50,
+          reqJob: '通用',
+          maxSlots: 7,
+          remainingSlots: 7,
+          successCount: 0,
+          failCount: 0,
+          isDestroyed: false,
+          icon: eq.icon || '⚔️',
+          image: null,
+          baseStats: defaultStats,
+          currentStats: { ...defaultStats },
+          bonusStats: {}
+        };
+      }
+      selectedScroll.value = null;
+      forgeEffect.value = null;
+      if (window.artaleSound) window.artaleSound.playClick();
+    }
+
+    function selectScroll(scroll) {
+      selectedScroll.value = scroll;
+      if (window.artaleSound) window.artaleSound.playScrollOpen();
+    }
+
+    function resetCurrentForgeItem() {
+      if (!currentForgeItem.value) return;
+      const item = currentForgeItem.value;
+      item.remainingSlots = item.maxSlots;
+      item.successCount = 0;
+      item.failCount = 0;
+      item.isDestroyed = false;
+      item.name = item.baseName;
+      item.currentStats = { ...item.baseStats };
+      item.bonusStats = {};
+      forgeEffect.value = null;
+      forgeLogs.value.unshift({
+        time: new Date().toLocaleTimeString('zh-TW', { hour12: false }),
+        type: 'info',
+        text: `【重置洗白】裝備「${item.baseName}」已完全恢復至初始無強化狀態。`
+      });
+      if (window.artaleSound) window.artaleSound.playClick();
+    }
+
+    function getStatName(key) {
+      const names = window.STAT_NAMES || (typeof STAT_NAMES !== 'undefined' ? STAT_NAMES : {});
+      return names[key] || key.toUpperCase();
+    }
+
+    function getScrollBonusDesc(scroll) {
+      if (scroll.isCleanSlate) return '成功時恢復 1 次失敗次數';
+      if (scroll.isChaos) return '隨機增減既有各項能力 -5 ~ +5';
+      const parts = [];
+      for (const [key, val] of Object.entries(scroll.statBonus || {})) {
+        parts.push(`${getStatName(key)} +${val}`);
+      }
+      return parts.join(', ');
+    }
+
+    function applyScroll() {
+      if (isForging.value || !currentForgeItem.value || !selectedScroll.value) return;
+      const item = currentForgeItem.value;
+      const scroll = selectedScroll.value;
+
+      if (item.isDestroyed) {
+        alert('該裝備已被破壞，無法再使用卷軸！');
+        return;
+      }
+
+      if (scroll.isCleanSlate) {
+        if (item.remainingSlots >= item.maxSlots) {
+          alert('該裝備可升級次數已達最大值，不需使用純白卷軸！');
+          return;
+        }
+        if (item.failCount <= 0) {
+          alert('該裝備尚無失敗扣除的次數可恢復！');
+          return;
+        }
+      } else {
+        if (item.remainingSlots <= 0) {
+          alert('已經沒有可使用的卷軸次數。');
+          return;
+        }
+      }
+
+      if (forgeTimer) clearTimeout(forgeTimer);
+      if (progressAnimFrame) cancelAnimationFrame(progressAnimFrame);
+      isForging.value = true;
+      forgeProgress.value = 0;
+      forgeEffect.value = null;
+      // 播放楓之谷正統衝裝進度過程音效 (UI.img/Enchant，1.57秒施法延遲音效)
+      if (window.artaleSound) window.artaleSound.playProcess();
+
+      const startTime = performance.now();
+      const duration = 1600; // 1.6 秒，與 UI.img/Enchant (1.57秒) 達成音畫極致毫秒級契合
+      const roll = Math.random() * 100;
+      const isSuccess = roll < scroll.successRate;
+      const isBroken = !isSuccess && scroll.curseRate > 0 && (Math.random() * 100 < scroll.curseRate);
+      let soundTriggered = false;
+
+      function stepProgress(now) {
+        const elapsed = now - startTime;
+        const p = Math.min(100, (elapsed / duration) * 100);
+        forgeProgress.value = p;
+
+        // 當進度條即將滿 100% 瞬間（提早 25ms 啟動 AudioContext 緩衝調度），結果音效與楓葉動畫零延遲完全同步！
+        if (!soundTriggered && elapsed >= duration - 25) {
+          soundTriggered = true;
+          if (isSuccess) {
+            if (window.artaleSound) window.artaleSound.playSuccess();
+          } else {
+            if (isBroken) {
+              if (window.artaleSound) window.artaleSound.playBroken();
+            } else {
+              if (window.artaleSound) window.artaleSound.playFailure();
+            }
+          }
+        }
+
+        if (elapsed < duration) {
+          progressAnimFrame = requestAnimationFrame(stepProgress);
+        } else {
+          progressAnimFrame = null;
+          forgeProgress.value = 100;
+          isForging.value = false;
+
+          const timeStr = new Date().toLocaleTimeString('zh-TW', { hour12: false });
+
+          if (isSuccess) {
+            forgeEffect.value = 'success';
+
+            if (scroll.isCleanSlate) {
+              item.remainingSlots++;
+              item.failCount--;
+              forgeLogs.value.unshift({
+                time: timeStr,
+                type: 'success',
+                text: `卷軸閃爍了一下，神秘的力量傳到了 ${item.baseName} 身上。純白卷軸的魔力發揮了作用，恢復了 1 次可升級次數。(可升級次數: ${item.remainingSlots}/${item.maxSlots})`
+              });
+            } else if (scroll.isChaos) {
+              item.remainingSlots--;
+              item.successCount++;
+              const changes = [];
+              for (const [key, val] of Object.entries(item.currentStats)) {
+                if (val > 0) {
+                  const delta = Math.floor(Math.random() * 11) - 5;
+                  item.currentStats[key] = Math.max(0, item.currentStats[key] + delta);
+                  item.bonusStats[key] = (item.bonusStats[key] || 0) + delta;
+                  changes.push(`${getStatName(key)} ${delta >= 0 ? '+' + delta : delta}`);
+                }
+              }
+              item.name = `${item.baseName} (+${item.successCount})`;
+              forgeLogs.value.unshift({
+                time: timeStr,
+                type: 'success',
+                text: `卷軸閃爍了一下，神秘的力量傳到了 ${item.baseName} 身上。能力值變動：${changes.join(', ')} (可升級次數: ${item.remainingSlots})`
+              });
+            } else {
+              item.remainingSlots--;
+              item.successCount++;
+              const statDesc = [];
+              for (const [key, val] of Object.entries(scroll.statBonus || {})) {
+                item.currentStats[key] = (item.currentStats[key] || 0) + val;
+                item.bonusStats[key] = (item.bonusStats[key] || 0) + val;
+                statDesc.push(`${getStatName(key)} +${val}`);
+              }
+              item.name = `${item.baseName} (+${item.successCount})`;
+              forgeLogs.value.unshift({
+                time: timeStr,
+                type: 'success',
+                text: `卷軸閃爍了一下，神秘的力量傳到了 ${item.baseName} 身上。能力值提升：${statDesc.join(', ')} (可升級次數: ${item.remainingSlots})`
+              });
+            }
+          } else {
+            // 失敗處理
+            if (isBroken) {
+              forgeEffect.value = 'broken';
+              item.isDestroyed = true;
+              forgeLogs.value.unshift({
+                time: timeStr,
+                type: 'broken',
+                text: `卷軸閃爍了一下，受到詛咒的魔力影響，裝備被破壞了。`
+              });
+            } else {
+              forgeEffect.value = 'failure';
+              if (!scroll.isCleanSlate) {
+                item.remainingSlots--;
+                item.failCount++;
+                forgeLogs.value.unshift({
+                  time: timeStr,
+                  type: 'failure',
+                  text: `卷軸閃爍了一下，但沒有任何變化。可升級次數減少 1 次。(可升級次數: ${item.remainingSlots})`
+                });
+              } else {
+                forgeLogs.value.unshift({
+                  time: timeStr,
+                  type: 'failure',
+                  text: `卷軸閃爍了一下，但沒有任何變化。`
+                });
+              }
+            }
+          }
+
+          // 2.2 秒後動畫完結，自動隱藏浮層以利連續衝裝
+          forgeTimer = setTimeout(() => {
+            forgeEffect.value = null;
+          }, 2200);
+        }
+      }
+
+      progressAnimFrame = requestAnimationFrame(stepProgress);
+    }
+
+    // 初始化預設裝備
+    initForgeItemFromPreset(selectedEquipPresetId.value);
+
+    // 延遲綁定點擊事件
+    if (typeof window !== 'undefined') {
+      window.addEventListener('click', handleFirstUserInteraction, { once: true });
+    }
+
     return {
+      currentView,
       allPools,
       selectedPoolId,
       activePool,
@@ -1365,7 +2475,30 @@ createApp({
       selectBgm,
       toggleBgmPlay,
       toggleBgmMute,
-      onVolumeChange
+      onVolumeChange,
+      showBgmVideo,
+      // 衝裝備鍛造系統導出
+      forgeEquipSource,
+      forgeCategory,
+      selectedEquipPresetId,
+      currentForgeItem,
+      selectedScroll,
+      selectedInventoryEquipIndex,
+      isForging,
+      forgeProgress,
+      forgeEffect,
+      forgeLogs,
+      forgeCategories,
+      filteredPresets,
+      equipInventoryList,
+      applicableScrolls,
+      onSelectEquipPreset,
+      onSelectInventoryEquip,
+      selectScroll,
+      resetCurrentForgeItem,
+      getStatName,
+      getScrollBonusDesc,
+      applyScroll
     };
   }
 }).mount('#app');
