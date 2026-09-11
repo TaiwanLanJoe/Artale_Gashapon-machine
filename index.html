@@ -112,11 +112,19 @@
         <span>{{ isPlayingBgm ? '⏸️' : '▶️' }}</span>
       </button>
 
-      <!-- 隨機下一首按鈕 -->
+      <!-- 換下一首按鈕 -->
       <button @click="playRandomBgm"
               class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gray-700/90 hover:bg-gray-600 text-amber-300 font-bold flex items-center justify-center border border-amber-500/50 shadow active:scale-95 transition-all text-xs"
               title="隨機換下一首 BGM">
-        <span>🔀</span>
+        <span>⏭️</span>
+      </button>
+
+      <!-- 循環模式切換按鈕 (單曲循環 vs 隨機輪播) -->
+      <button @click="toggleLoopMode"
+              class="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center border shadow active:scale-95 transition-all text-xs font-bold"
+              :class="bgmLoopMode === 'single' ? 'bg-amber-400 text-slate-950 border-amber-300 ring-2 ring-amber-400/60 font-black' : 'bg-gray-700/90 hover:bg-gray-600 text-amber-300 border-amber-500/50'"
+              :title="bgmLoopMode === 'single' ? '【單曲循環中】播完將重複當前音樂，點擊切換為隨機輪播' : '【隨機輪播中】播完將隨機播放下一首，點擊切換為單曲循環'">
+        <span>{{ bgmLoopMode === 'single' ? '🔂' : '🔀' }}</span>
       </button>
 
       <!-- 音量控制 (桌面顯示滑桿，手機點擊靜音) -->
@@ -737,11 +745,18 @@
                    placeholder="搜尋中文地名或英文原曲名 (例：弓箭手村、魔法森林、時間神殿、Floral Life...)"
                    class="w-full pl-8 pr-3 py-1.5 text-xs sm:text-sm bg-white border-2 border-gray-400 rounded focus:border-amber-500 focus:outline-none text-gray-800 shadow-inner">
           </div>
+          <!-- 循環模式切換 -->
+          <button @click="toggleLoopMode"
+                  class="maple-btn py-1.5 px-2 text-xs font-bold shrink-0 flex items-center gap-1 shadow"
+                  :class="bgmLoopMode === 'single' ? 'bg-amber-400 font-black' : ''"
+                  :title="bgmLoopMode === 'single' ? '目前為單曲循環，點擊切換為隨機輪播' : '目前為隨機輪播，點擊切換為單曲循環'">
+            <span>{{ bgmLoopMode === 'single' ? '🔂 單曲' : '🔀 輪播' }}</span>
+          </button>
           <button @click="playRandomBgm"
-                  class="maple-btn py-1.5 px-2.5 text-xs font-bold shrink-0 flex items-center gap-1 text-slate-900 shadow"
-                  title="隨機播放一首">
-            <span>🔀</span>
-            <span class="hidden xs:inline">隨機</span>
+                  class="maple-btn py-1.5 px-2 text-xs font-bold shrink-0 flex items-center gap-1 text-slate-900 shadow"
+                  title="隨機換下一首">
+            <span>⏭️</span>
+            <span class="hidden xs:inline">下一首</span>
           </button>
         </div>
 
@@ -1092,6 +1107,14 @@ createApp({
     const isBgmModalOpen = ref(false);
     const bgmSearchQuery = ref('');
     const bgmSelectedCategory = ref('classic');
+    const bgmLoopMode = ref('shuffle'); // 'shuffle' (隨機輪播) | 'single' (單曲循環)
+
+    function toggleLoopMode() {
+      bgmLoopMode.value = bgmLoopMode.value === 'shuffle' ? 'single' : 'shuffle';
+      try {
+        localStorage.setItem('artale_bgm_loop_mode', bgmLoopMode.value);
+      } catch(e){}
+    }
 
     const bgmCategories = [
       { id: 'classic', name: '⭐ 經典回憶' },
@@ -1206,10 +1229,12 @@ createApp({
     function initYouTubeBgm() {
       if (typeof window === 'undefined') return;
 
-      // 載入本地儲存音量
+      // 載入本地儲存音量與循環模式
       try {
         const savedVol = localStorage.getItem('artale_bgm_volume');
         if (savedVol !== null) bgmVolume.value = Math.min(100, Math.max(0, parseInt(savedVol)));
+        const savedLoop = localStorage.getItem('artale_bgm_loop_mode');
+        if (savedLoop) bgmLoopMode.value = savedLoop;
       } catch(e){}
 
       // 首次進入隨機抽取一首 (優先從 classic 經典推薦名單中抽取)
@@ -1254,8 +1279,17 @@ createApp({
               } else if (event.data === window.YT.PlayerState.PAUSED) {
                 isPlayingBgm.value = false;
               } else if (event.data === window.YT.PlayerState.ENDED) {
-                // 播畢自動隨機換下一首
-                playRandomBgm();
+                if (bgmLoopMode.value === 'single') {
+                  // 單曲循環模式：重頭播放當前音樂
+                  if (ytPlayer && ytPlayerReady) {
+                    ytPlayer.seekTo(0);
+                    ytPlayer.playVideo();
+                    isPlayingBgm.value = true;
+                  }
+                } else {
+                  // 隨機輪播模式：播畢自動隨機換下一首
+                  playRandomBgm();
+                }
               }
             },
             onError: () => {
@@ -1325,6 +1359,8 @@ createApp({
       getCategoryCount,
       filteredBgmList,
       currentBgmTitle,
+      bgmLoopMode,
+      toggleLoopMode,
       playRandomBgm,
       selectBgm,
       toggleBgmPlay,
