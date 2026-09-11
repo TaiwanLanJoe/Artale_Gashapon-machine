@@ -1,0 +1,2271 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<title>🍁 Artale 楓之谷轉蛋機模擬器 - 全官方機率池</title>
+
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com"></script>
+<!-- Vue 3 CDN -->
+<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+<!-- Google Fonts: Press Start 2P & Noto Sans TC -->
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          pixel: ['"Press Start 2P"', 'monospace'],
+          tc: ['"Noto Sans TC"', 'sans-serif'],
+        },
+        screens: {
+          'xs': '380px',
+        }
+      }
+    }
+  }
+</script>
+
+<style>
+  * { box-sizing: border-box; }
+  
+  /* 楓之谷經典背景與 Artale 官方視覺 */
+  body {
+    background: #101F33 url('./images/artale-bg.jpg') no-repeat center center fixed;
+    background-size: cover;
+    min-height: 100vh;
+    min-height: 100dvh;
+    font-family: 'Noto Sans TC', sans-serif;
+    color: #333333;
+    overflow-x: hidden;
+    user-select: none;
+    position: relative;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* 行動裝置防止 iOS 縮放輸入框 */
+  @media screen and (max-width: 768px) {
+    input, select, textarea {
+      font-size: 16px !important;
+    }
+  }
+
+  /* 復古像素網格與半透明暗角模糊層，襯托楓之谷視窗 */
+  body::before {
+    content: "";
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: radial-gradient(circle at 50% 35%, rgba(16, 31, 51, 0.72) 0%, rgba(10, 18, 30, 0.90) 100%);
+    backdrop-filter: blur(4px);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* 楓之谷原版 NPC 名牌標籤 (黑底金邊) */
+  .maple-npc-tag {
+    background: rgba(14, 18, 24, 0.92);
+    border: 1.5px solid #F5C242;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.6), inset 0 0 4px rgba(245, 194, 60, 0.4);
+    color: #FFE680;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;
+  }
+
+  /* 楓之谷原版金屬視窗主外框 (Maple Classic Window) */
+  .maple-window {
+    background: #EDE8DF;
+    border: 3px solid;
+    border-color: #A3A8AF #383E45 #2A3037 #C7CCD4;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.75), 
+                inset 1px 1px 0 #FFFFFF, 
+                inset -1px -1px 0 #7A7E85;
+    position: relative;
+    border-radius: 4px;
+  }
+
+  /* 視窗藍色立體標題列 */
+  .maple-titlebar {
+    background: linear-gradient(180deg, #537FA8 0%, #39638E 45%, #294D74 100%);
+    color: #FFFFFF;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 6px 0 10px;
+    border-bottom: 2px solid #1E3753;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.4);
+  }
+
+  .maple-title-text {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-shadow: 1px 1px 0 #122234, -1px -1px 0 #122234, 1px -1px 0 #122234, -1px 1px 0 #122234;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* 楓之谷經典紅色關閉按鈕 [X] */
+  .maple-close-btn {
+    width: 17px;
+    height: 17px;
+    background: linear-gradient(180deg, #ED6D6D 0%, #D43F3F 50%, #A82424 100%);
+    border: 1px solid #5A1010;
+    box-shadow: inset 1px 1px 0 #FFA6A6, inset -1px -1px 0 #731313;
+    color: white;
+    font-size: 9px;
+    font-weight: 900;
+    line-height: 15px;
+    text-align: center;
+    cursor: pointer;
+    border-radius: 2px;
+  }
+  .maple-close-btn:active {
+    transform: translate(1px, 1px);
+    background: linear-gradient(180deg, #A82424 0%, #D43F3F 100%);
+    box-shadow: inset 1px 1px 0 #731313;
+  }
+
+  /* 楓之谷內凹灰底面板 (Sunken Area) */
+  .maple-sunken {
+    background: #DFD9CE;
+    border: 2px solid;
+    border-color: #8C867C #FFFFFF #FFFFFF #8C867C;
+    box-shadow: inset 1px 1px 2px rgba(0,0,0,0.15);
+  }
+
+  /* 楓之谷米白對話/展示槽 */
+  .maple-paper {
+    background: #F8F6F0;
+    border: 2px solid;
+    border-color: #8C867C #FFFFFF #FFFFFF #8C867C;
+  }
+
+  /* 楓之谷經典金黃色/橘色立體按鈕 */
+  .maple-btn {
+    background: linear-gradient(180deg, #FFF6D1 0%, #F5C860 40%, #E39920 100%);
+    border: 1px solid #5C3804;
+    border-radius: 3px;
+    box-shadow: inset 1px 1px 0 #FFFFFF, 
+                inset -1px -1px 0 #A86A08, 
+                0 2px 0 #2A1A02;
+    color: #2D1A00;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 6px 14px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    text-shadow: 0 1px 0 rgba(255,255,255,0.7);
+    transition: all 0.05s ease;
+  }
+  .maple-btn:hover {
+    filter: brightness(1.08);
+  }
+  .maple-btn:active {
+    transform: translate(1px, 2px);
+    box-shadow: inset 1px 1px 1px #8A5405, 0 0 0 #2A1A02;
+  }
+  .maple-btn:disabled {
+    filter: grayscale(0.8) brightness(0.85);
+    cursor: not-allowed;
+    transform: none !important;
+  }
+
+  /* 藍色輔助按鈕 */
+  .maple-btn-blue {
+    background: linear-gradient(180deg, #E0F0FF 0%, #68B1F5 40%, #2977CC 100%);
+    border: 1px solid #113661;
+    box-shadow: inset 1px 1px 0 #FFFFFF, inset -1px -1px 0 #185294, 0 2px 0 #0C1E36;
+    color: #082142;
+    text-shadow: 0 1px 0 rgba(255,255,255,0.6);
+  }
+
+  /* 紅色輔助按鈕 */
+  .maple-btn-red {
+    background: linear-gradient(180deg, #FFE2E2 0%, #F57171 40%, #D42626 100%);
+    border: 1px solid #661010;
+    box-shadow: inset 1px 1px 0 #FFFFFF, inset -1px -1px 0 #9E1919, 0 2px 0 #360707;
+    color: #400505;
+    text-shadow: 0 1px 0 rgba(255,255,255,0.6);
+  }
+
+  /* 楓之谷經典標籤頁 (Tabs) */
+  .maple-tab-btn {
+    padding: 6px 8px;
+    font-size: 11px;
+    font-weight: 700;
+    border-radius: 4px 4px 0 0;
+    border: 2px solid #36506E;
+    border-bottom: none;
+    cursor: pointer;
+    background: linear-gradient(180deg, #597A9F 0%, #3F5E82 100%);
+    color: #D3E2F2;
+    text-shadow: 1px 1px 0 #1C2D40;
+    transition: all 0.1s;
+    user-select: none;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.3);
+  }
+  @media (min-width: 640px) {
+    .maple-tab-btn {
+      padding: 6px 14px;
+      font-size: 12px;
+    }
+  }
+  .maple-tab-btn:hover {
+    color: #FFFFFF;
+    background: linear-gradient(180deg, #668BB3 0%, #4A6E96 100%);
+  }
+  .maple-tab-btn.active {
+    background: #EDE8DF;
+    color: #1F3652;
+    border-color: #A3A8AF #383E45 #EDE8DF #C7CCD4;
+    text-shadow: none;
+    transform: translateY(2px);
+    box-shadow: inset 0 1px 0 #FFFFFF;
+  }
+
+  /* 楓之谷原版道具格子 (44x44px Inventory Slot) */
+  .maple-slot {
+    width: 44px;
+    height: 44px;
+    background: #D8D2C5;
+    border: 2px solid;
+    border-color: #797368 #FFFFFF #FFFFFF #797368;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: inset 1px 1px 2px rgba(0,0,0,0.2);
+    transition: all 0.1s;
+  }
+  @media (max-width: 360px) {
+    .maple-slot {
+      width: 40px;
+      height: 40px;
+    }
+  }
+  .maple-slot:hover, .maple-slot:active {
+    background: #EAE4D8;
+    outline: 2px solid #F5C860;
+  }
+  .maple-slot.is-selected {
+    background: #FFF4D0 !important;
+    outline: 2px solid #D97706 !important;
+    box-shadow: 0 0 8px rgba(217, 119, 6, 0.8), inset 0 0 4px rgba(245, 158, 11, 0.5) !important;
+  }
+
+  /* 歐皇道具金光閃爍特效 (機率 <= 0.09%) */
+  .maple-slot.is-lucky {
+    background: #FFF7DC;
+    border-color: #C28B00 #FFF5A8 #FFF5A8 #C28B00;
+    box-shadow: 0 0 6px rgba(245, 194, 60, 0.8), inset 0 0 4px rgba(255, 215, 0, 0.5);
+    animation: luckyGlow 2s infinite alternate;
+  }
+  @keyframes luckyGlow {
+    0% { box-shadow: 0 0 4px rgba(245, 194, 60, 0.5); }
+    100% { box-shadow: 0 0 10px rgba(245, 194, 60, 0.95); }
+  }
+
+  .slot-count {
+    position: absolute;
+    bottom: 1px;
+    right: 2px;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 8px;
+    font-weight: 900;
+    color: #FFFFFF;
+    text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;
+  }
+
+  .lucky-badge {
+    position: absolute;
+    top: -4px;
+    left: -4px;
+    font-size: 11px;
+    line-height: 1;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.6));
+    z-index: 10;
+  }
+
+  /* 楓之谷 Tooltip (黑底金邊) */
+  .maple-tooltip {
+    background: rgba(18, 20, 24, 0.96);
+    border: 2px solid #E09822;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.8), inset 0 0 0 1px #FFE28A;
+    color: #FFFFFF;
+    border-radius: 4px;
+    padding: 8px 12px;
+  }
+
+  /* 轉蛋機本體動畫 */
+  @keyframes knobTurn {
+    0% { transform: rotate(0deg); }
+    30% { transform: rotate(-20deg); }
+    65% { transform: rotate(35deg); }
+    85% { transform: rotate(20deg); }
+    100% { transform: rotate(30deg); }
+  }
+  @keyframes globeShake {
+    0%,100% { transform: translate(0, 0) rotate(0deg); }
+    20% { transform: translate(-2px, 1px) rotate(-1.5deg); }
+    40% { transform: translate(2px, -1px) rotate(1.5deg); }
+    60% { transform: translate(-2px, -1px) rotate(-1deg); }
+    80% { transform: translate(2px, 1px) rotate(1deg); }
+  }
+  @keyframes ballDrop {
+    0% { transform: translateY(-70px) scale(0.6); opacity: 0; }
+    50% { transform: translateY(0) scale(1.1); opacity: 1; }
+    70% { transform: translateY(-16px) scale(0.95); }
+    85% { transform: translateY(0) scale(1.05); }
+    100% { transform: translateY(0) scale(1); opacity: 1; }
+  }
+
+  .anim-knob { animation: knobTurn 0.8s ease-in-out; }
+  .anim-shake { animation: globeShake 0.6s ease-in-out; }
+  .anim-balldrop { animation: ballDrop 0.65s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
+
+  /* 捲軸美化 */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: #DFD9CE; }
+  ::-webkit-scrollbar-thumb { background: #8C867C; border: 1px solid #EDE8DF; border-radius: 2px; }
+  ::-webkit-scrollbar-thumb:hover { background: #665F55; }
+</style>
+</head>
+
+<body class="py-2.5 px-2 sm:p-4 md:p-6 flex flex-col items-center justify-start min-h-screen">
+
+<div id="app" class="relative z-10 w-full max-w-5xl">
+
+  <!-- 頂部楓之谷風格橫幅 (全 RWD 自適應縮放) -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-2.5 px-1 sm:px-2 gap-1.5 sm:gap-2">
+    <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+      <span class="text-2xl sm:text-3xl filter drop-shadow shrink-0">🍁</span>
+      <div class="min-w-0">
+        <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+          <h1 class="text-base xs:text-lg sm:text-xl md:text-2xl font-black text-yellow-300 tracking-wide font-tc truncate"
+              style="text-shadow: 2px 2px 0 #18283d, 0 0 10px rgba(253,224,71,0.5);">
+            Artale 楓之谷轉蛋機模擬器
+          </h1>
+          <span class="hidden xs:inline-block px-1.5 py-0.2 text-[9px] sm:text-[10px] font-bold bg-red-600/90 text-white rounded border border-red-400 font-tc shadow">
+            MapleStory Worlds
+          </span>
+        </div>
+        <p class="text-[11px] sm:text-xs text-blue-200 font-medium truncate">
+          官方完整機率庫 · 三大專屬轉蛋機台 · 原版 Maple UI
+        </p>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2 self-end sm:self-auto shrink-0">
+      <span class="px-2 py-0.5 sm:py-1 text-[11px] sm:text-xs font-bold bg-black/60 text-amber-300 rounded border border-[#547397] font-tc backdrop-blur-sm shadow flex items-center gap-1">
+        <span>🏛️</span>
+        <span>官方機率同步中</span>
+      </span>
+    </div>
+  </div>
+
+  <!-- 行動端專屬導航快速切換列 (只在小於 lg 螢幕顯示，解決手機長滾動問題) -->
+  <div class="lg:hidden mb-2.5 p-1 bg-[#2C4A6F]/90 rounded border-2 border-[#547397] shadow flex items-center gap-1 font-tc">
+    <button @click="mobileViewMode = 'gacha'"
+            class="flex-1 py-1.5 px-1 text-center text-xs font-bold rounded transition-all flex items-center justify-center gap-1"
+            :class="mobileViewMode === 'gacha' ? 'bg-gradient-to-b from-[#FFF2A3] to-[#E5A823] text-[#4A2600] shadow font-black' : 'text-blue-100 hover:bg-white/10'">
+      <span>🎰</span>
+      <span>轉蛋機</span>
+    </button>
+    <button @click="mobileViewMode = 'inventory'; activeTab = 'inventory'"
+            class="flex-1 py-1.5 px-1 text-center text-xs font-bold rounded transition-all flex items-center justify-center gap-1"
+            :class="mobileViewMode === 'inventory' && activeTab === 'inventory' ? 'bg-gradient-to-b from-[#FFF2A3] to-[#E5A823] text-[#4A2600] shadow font-black' : 'text-blue-100 hover:bg-white/10'">
+      <span>🎒</span>
+      <span>背包 ({{ inventoryTotalCount }})</span>
+    </button>
+    <button @click="mobileViewMode = 'inventory'; activeTab = 'stats'"
+            class="flex-1 py-1.5 px-1 text-center text-xs font-bold rounded transition-all flex items-center justify-center gap-1"
+            :class="mobileViewMode === 'inventory' && activeTab === 'stats' ? 'bg-gradient-to-b from-[#FFF2A3] to-[#E5A823] text-[#4A2600] shadow font-black' : 'text-blue-100 hover:bg-white/10'">
+      <span>📊</span>
+      <span>統計</span>
+    </button>
+    <button @click="mobileViewMode = 'inventory'; activeTab = 'pool'"
+            class="flex-1 py-1.5 px-1 text-center text-xs font-bold rounded transition-all flex items-center justify-center gap-1"
+            :class="mobileViewMode === 'inventory' && activeTab === 'pool' ? 'bg-gradient-to-b from-[#FFF2A3] to-[#E5A823] text-[#4A2600] shadow font-black' : 'text-blue-100 hover:bg-white/10'">
+      <span>📜</span>
+      <span>機率</span>
+    </button>
+    <button @click="mobileViewMode = 'all'"
+            class="py-1.5 px-2 text-center text-xs font-bold rounded transition-all flex items-center justify-center"
+            :class="mobileViewMode === 'all' ? 'bg-amber-400 text-amber-950 font-black' : 'text-blue-200 hover:bg-white/10'"
+            title="全部展開 (垂直排列)">
+      <span>展開</span>
+    </button>
+  </div>
+
+  <!-- 主視窗本體 (MapleStory Window Layout) -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-4 items-start">
+
+    <!-- 左區：轉蛋機主體與操作區 (5 Cols，在 mobileViewMode 為 inventory 時於手機上隱藏，all 或 gacha 時顯示) -->
+    <div class="lg:col-span-5 flex flex-col gap-3"
+         :class="{ 'hidden lg:flex': mobileViewMode === 'inventory' }">
+      <div class="maple-window">
+        <!-- 視窗標題 -->
+        <div class="maple-titlebar">
+          <div class="maple-title-text truncate">
+            <span>🎰</span>
+            <span class="truncate">{{ activePool.name }}</span>
+          </div>
+          <div class="maple-close-btn" title="關閉">X</div>
+        </div>
+
+        <div class="p-2.5 sm:p-4 flex flex-col items-center">
+
+          <!-- 轉蛋機切換選擇區 (位於轉蛋機正上方，極其醒目) -->
+          <div class="w-full mb-2.5 sm:mb-3 p-2 sm:p-2.5 bg-[#EDE8DF] maple-sunken rounded border border-[#8C867C] flex flex-col gap-1.5 sm:gap-2 shadow-inner font-tc">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-black text-[#1F3652] flex items-center gap-1">
+                <span class="text-sm">🎰</span>
+                <span>切換轉蛋機：</span>
+              </span>
+              <span class="text-[10px] text-amber-800 font-bold bg-amber-100 px-1.5 py-0.5 rounded border border-amber-300">
+                目前：{{ activePool.shortName }}
+              </span>
+            </div>
+
+            <!-- 快捷機台切換按鈕組 (簡潔標籤，完全不溢出不截斷) -->
+            <div class="grid grid-cols-3 gap-1 sm:gap-1.5">
+              <button v-for="p in allPools" :key="p.id" type="button"
+                      @click="selectedPoolId = p.id; onSwitchPool()"
+                      class="py-1.5 px-0.5 text-center text-xs font-black rounded transition-all border-2 cursor-pointer flex items-center justify-center min-h-[34px] shadow-sm select-none"
+                      :class="selectedPoolId === p.id 
+                        ? 'bg-gradient-to-b from-[#FFF2A3] to-[#E5A823] text-[#4A2600] border-[#92400E] shadow-md scale-[1.02]' 
+                        : 'bg-gradient-to-b from-[#597A9F] to-[#3F5E82] text-white border-[#2A3E54] hover:opacity-90'">
+                <span>{{ p.shortName }}</span>
+              </button>
+            </div>
+
+            <!-- 下拉選單 (支援完整機台名稱與品項數) -->
+            <select v-model="selectedPoolId" @change="onSwitchPool"
+                    class="w-full text-xs font-bold py-1.5 px-2 rounded bg-white border-2 border-[#547397] text-[#1F3652] focus:outline-none focus:border-amber-500 cursor-pointer shadow-sm">
+              <option v-for="p in allPools" :key="p.id" :value="p.id">
+                {{ p.name }} (共 {{ p.items.length }} 項道具)
+              </option>
+            </select>
+          </div>
+
+          <!-- 楓之谷原版轉蛋機 NPC 舞台與原廠 Sprite -->
+          <div class="relative w-full py-2.5 sm:py-4 px-2 flex flex-col items-center justify-center select-none bg-gradient-to-b from-[#EDE8DF]/90 to-[#D8D2C5] rounded border-2 border-[#8C867C] shadow-inner overflow-hidden">
+            <!-- 柔和背光金光暈 -->
+            <div class="absolute w-32 sm:w-44 h-32 sm:h-44 rounded-full bg-amber-200/50 blur-xl pointer-events-none"></div>
+
+            <!-- 轉蛋機本體 Sprite -->
+            <div class="relative z-10 flex flex-col items-center">
+              <img src="./images/gachapon-npc.webp" 
+                   alt="Artale Gachapon Machine" 
+                   class="w-[120px] xs:w-[135px] sm:w-[150px] md:w-[160px] h-auto object-contain filter drop-shadow-xl transition-all"
+                   :class="{ 'anim-shake': isSpinning }"
+                   style="image-rendering: pixelated;" />
+              
+              <!-- 轉蛋滾出膠囊動畫 -->
+              <div v-if="rollingBall.show" 
+                   class="absolute -bottom-2 right-2 anim-balldrop z-30">
+                <div class="w-7 sm:w-8 h-7 sm:h-8 rounded-full border-2 border-amber-950 flex items-center justify-center shadow-lg transform -rotate-12"
+                     :style="{ background: rollingBall.color }">
+                  <div class="w-2.5 h-2.5 bg-white/85 rounded-full -mt-2 -ml-2"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 楓之谷經典 NPC 名牌 (黑底金邊立體標籤) -->
+            <div class="relative z-10 mt-2 sm:mt-3 px-3.5 py-0.5 rounded-full maple-npc-tag shadow-md flex items-center gap-1.5 font-tc">
+              <span class="text-amber-300">🍁</span>
+              <span>轉蛋機 (Gachapon)</span>
+            </div>
+          </div>
+
+          <!-- 抽卡控制區（自訂數量輸入與快捷按鈕） -->
+          <div class="w-full mt-2.5 sm:mt-3 maple-sunken p-2.5 sm:p-3 rounded font-tc">
+            <div class="flex items-center justify-between text-xs font-bold text-gray-700 mb-2 px-1">
+              <span class="truncate">消耗：{{ activePool.ticketName }}</span>
+              <label class="flex items-center gap-1.5 cursor-pointer text-blue-900 select-none shrink-0 ml-2 text-[11px] sm:text-xs">
+                <input type="checkbox" v-model="skipAnimation" class="rounded accent-blue-600">
+                <span>跳過動畫</span>
+              </label>
+            </div>
+
+            <!-- 自訂抽卡數量輸入框與快捷鍵 -->
+            <div class="bg-white/85 p-2 sm:p-2.5 rounded border border-gray-300 mb-2 sm:mb-2.5 shadow-sm">
+              <div class="flex items-center justify-between gap-2 mb-2">
+                <label class="text-xs font-bold text-gray-800 shrink-0">自訂抽取數量：</label>
+                <div class="flex items-center gap-1.5 flex-1">
+                  <input type="number" min="1" max="1000" v-model.number="customPullCount"
+                         class="w-full p-1.5 text-center text-sm sm:text-base font-bold bg-[#FAF7F0] border-2 border-gray-400 rounded focus:border-amber-500 focus:outline-none text-blue-900 min-h-[36px]"
+                         placeholder="次數">
+                  <span class="text-xs text-gray-600 font-bold shrink-0">次</span>
+                </div>
+              </div>
+              
+              <!-- 快捷按鈕 (4欄自適應點擊目標) -->
+              <div class="grid grid-cols-4 gap-1 sm:gap-1.5">
+                <button type="button" class="py-1.5 px-0.5 text-xs font-bold rounded border bg-gray-100 hover:bg-amber-100 border-gray-300 text-gray-800 active:scale-95 transition-all min-h-[34px] flex items-center justify-center"
+                        @click="customPullCount = 1">
+                  1 抽
+                </button>
+                <button type="button" class="py-1.5 px-0.5 text-xs font-bold rounded border bg-gray-100 hover:bg-amber-100 border-gray-300 text-gray-800 active:scale-95 transition-all min-h-[34px] flex items-center justify-center"
+                        @click="customPullCount = 10">
+                  10 連
+                </button>
+                <button type="button" class="py-1.5 px-0.5 text-xs font-bold rounded border bg-gray-100 hover:bg-amber-100 border-gray-300 text-gray-800 active:scale-95 transition-all min-h-[34px] flex items-center justify-center"
+                        @click="customPullCount = 50">
+                  50 抽
+                </button>
+                <button type="button" class="py-1.5 px-0.5 text-xs font-bold rounded border bg-gray-100 hover:bg-amber-100 border-gray-300 text-gray-800 active:scale-95 transition-all min-h-[34px] flex items-center justify-center"
+                        @click="customPullCount = 100">
+                  100 抽
+                </button>
+              </div>
+            </div>
+
+            <!-- 開始轉蛋按鈕 -->
+            <button class="maple-btn w-full py-2.5 sm:py-3 text-sm sm:text-base flex items-center justify-center gap-2 shadow-md min-h-[44px]"
+                    :disabled="isSpinning || !customPullCount || customPullCount < 1"
+                    @click="doPull(customPullCount)">
+              <span class="text-lg">🪙</span>
+              <span class="font-black">開始轉蛋 (共 {{ customPullCount || 0 }} 次)</span>
+            </button>
+
+            <div class="mt-2.5 pt-2 border-t border-gray-300 flex items-center justify-between text-xs font-tc text-gray-600 px-1">
+              <span>累積轉蛋次數：<strong class="text-blue-800 font-black text-sm">{{ totalPulls }}</strong> 次</span>
+              <span v-if="luckyPullsCount > 0" class="text-amber-700 font-bold flex items-center gap-1">
+                🌟 歐皇：{{ luckyPullsCount }} 次
+              </span>
+              <span v-else class="text-gray-400">目前無歐皇紀錄</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 右區：道具欄 / 數量加總統計 / 機率資料 (7 Cols，在 mobileViewMode 為 gacha 時於手機上隱藏，all 或 inventory 時顯示) -->
+    <div class="lg:col-span-7 flex flex-col"
+         :class="{ 'hidden lg:flex': mobileViewMode === 'gacha' }">
+      <!-- 楓之谷風格 Tab 列 (支援 RWD 彈性寬度) -->
+      <div class="flex gap-1 pl-1">
+        <button class="maple-tab-btn flex-1 sm:flex-initial text-center text-[11px] sm:text-xs" :class="{ active: activeTab === 'inventory' }" @click="activeTab = 'inventory'">
+          <span class="truncate">🎒 背包 ({{ inventoryTotalCount }})</span>
+        </button>
+        <button class="maple-tab-btn flex-1 sm:flex-initial text-center text-[11px] sm:text-xs" :class="{ active: activeTab === 'stats' }" @click="activeTab = 'stats'">
+          <span class="truncate">📊 獲得統計</span>
+        </button>
+        <button class="maple-tab-btn flex-1 sm:flex-initial text-center text-[11px] sm:text-xs" :class="{ active: activeTab === 'pool' }" @click="activeTab = 'pool'">
+          <span class="truncate">📜 機率表</span>
+        </button>
+      </div>
+
+      <!-- 視窗主面板 -->
+      <div class="maple-window" style="border-radius: 0 4px 4px 4px; min-height: 380px;">
+        <div class="maple-titlebar">
+          <div class="maple-title-text truncate">
+            <span>{{ activeTab === 'inventory' ? '🎒 背包道具清單' : activeTab === 'stats' ? '📊 道具獲得統計' : '📜 ' + activePool.name + ' 機率表' }}</span>
+          </div>
+          <div class="text-[10px] text-blue-200 font-normal truncate hidden sm:block text-right">
+            {{ activeTab === 'inventory' ? '各機台累積收納' : activeTab === 'stats' ? '各道具累計加總' : activePool.description }}
+          </div>
+        </div>
+
+        <div class="p-2.5 sm:p-4">
+
+          <!-- ================= TAB 1: 道具背包 ================= -->
+          <div v-if="activeTab === 'inventory'">
+            <!-- 背包過濾與操作列 (自適應排版) -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2.5 sm:mb-3">
+              <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap flex-1">
+                <span class="text-xs font-bold text-gray-700 font-tc shrink-0">過濾：</span>
+                <select v-model="inventoryFilter" class="text-xs p-1.5 rounded bg-white border border-gray-400 font-tc flex-1 sm:flex-initial">
+                  <option value="all">全部道具</option>
+                  <option value="lucky">🌟 歐皇大獎 (≤0.09%)</option>
+                </select>
+                <select v-model="inventorySort" class="text-xs p-1.5 rounded bg-white border border-gray-400 font-tc flex-1 sm:flex-initial">
+                  <option value="count">依數量 (多到少)</option>
+                  <option value="rate">依機率 (低機率優先)</option>
+                  <option value="name">依名稱</option>
+                </select>
+              </div>
+              <button class="maple-btn maple-btn-red text-xs py-1 px-2.5 self-end sm:self-auto shrink-0" @click="clearInventory">清空背包</button>
+            </div>
+
+            <!-- 楓之谷物品欄網格 (自適應格子填滿，支援手機點擊選中鎖定與電腦懸停) -->
+            <div class="maple-sunken p-2 sm:p-3 rounded min-h-[260px] sm:min-h-[320px]">
+              <div v-if="filteredInventory.length === 0" class="flex flex-col items-center justify-center h-52 sm:h-64 text-gray-500 font-tc">
+                <span class="text-4xl mb-2">🎒</span>
+                <p class="text-sm font-bold">背包空空如也！</p>
+                <p class="text-xs text-gray-400 mt-1">點擊左側「開始轉蛋」即可獲得道具。</p>
+              </div>
+
+              <!-- 智能填滿網格 (auto-fill 完美配合任何螢幕寬度) -->
+              <div v-else class="grid grid-cols-[repeat(auto-fill,minmax(42px,1fr))] sm:grid-cols-[repeat(auto-fill,minmax(46px,1fr))] gap-1.5 sm:gap-2 max-h-[340px] overflow-y-auto pr-1 justify-items-center">
+                <div v-for="item in filteredInventory" :key="item.name"
+                     class="maple-slot group"
+                     :class="{ 
+                       'is-lucky': item.isLucky,
+                       'is-selected': selectedSlotItem && selectedSlotItem.name === item.name 
+                     }"
+                     @mouseenter="hoverItem = item"
+                     @mouseleave="hoverItem = null"
+                     @click="onSlotClick(item)">
+                  
+                  <!-- 歐皇皇冠徽章 -->
+                  <span v-if="item.isLucky" class="lucky-badge" title="歐皇大獎！機率 ≤ 0.09%">👑</span>
+
+                  <!-- 正統楓之谷圖案 -->
+                  <img :src="item.icon" :alt="item.name" class="w-7 h-7 sm:w-8 sm:h-8 object-contain select-none pointer-events-none" loading="lazy" />
+
+                  <!-- 數量 -->
+                  <span class="slot-count">{{ item.count }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 點擊/懸停道具詳情卡 (楓之谷正統黑底金框，手機點擊鎖定可關閉) -->
+            <div v-if="activeInspectItem" class="mt-2.5 maple-tooltip font-tc text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-lg animate-scale-in">
+              <div class="flex items-center gap-2.5 min-w-0">
+                <img :src="activeInspectItem.icon" :alt="activeInspectItem.name" class="w-9 h-9 object-contain bg-black/40 p-1 rounded border border-amber-400/40 shrink-0" />
+                <div class="min-w-0">
+                  <div class="flex items-center gap-1.5 flex-wrap">
+                    <span class="font-bold text-amber-300 text-sm truncate">{{ activeInspectItem.name }}</span>
+                    <span v-if="activeInspectItem.isLucky" class="text-yellow-400 font-black text-[10px] sm:text-[11px] shrink-0">[🌟 歐皇大獎]</span>
+                  </div>
+                  <div class="text-gray-300 mt-0.5 text-[11px]">基礎機率：<strong class="text-emerald-400 font-mono">{{ (activeInspectItem.weight * 100).toFixed(6) }}%</strong></div>
+                </div>
+              </div>
+              <div class="flex items-center justify-between sm:justify-end gap-3 pt-1.5 sm:pt-0 border-t sm:border-t-0 border-gray-700">
+                <div class="text-left sm:text-right">
+                  <div class="text-gray-400 text-[10px]">已擁有數量</div>
+                  <div class="text-amber-400 font-bold font-pixel text-xs sm:text-sm">× {{ activeInspectItem.count }}</div>
+                </div>
+                <button v-if="selectedSlotItem" @click="selectedSlotItem = null" class="text-gray-400 hover:text-white px-2 py-0.5 rounded border border-gray-600 text-[10px] ml-2">
+                  ✕ 關閉
+                </button>
+              </div>
+            </div>
+
+            <!-- 底部說明列 -->
+            <div class="mt-2 flex flex-col sm:flex-row sm:items-center justify-between text-xs font-tc text-gray-600 px-1 gap-1">
+              <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
+                <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 bg-[#FFF7DC] border border-amber-500 inline-block rounded-sm"></span> 歐皇道具 (≤0.09%)</span>
+                <span>總計 <strong>{{ inventoryTotalCount }}</strong> 件道具</span>
+              </div>
+              <div class="text-gray-500 text-[11px]">手機點擊格子可鎖定檢視詳情</div>
+            </div>
+          </div>
+
+          <!-- ================= TAB 2: 獲得統計加總 (各道具抽取數量加總 + 歐皇大獎) ================= -->
+          <div v-if="activeTab === 'stats'">
+            <!-- 頂部數據看板 (楓之谷告示牌風格) -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-2.5 sm:mb-3">
+              <div class="maple-paper p-2 rounded text-center">
+                <div class="text-[10px] text-gray-600 font-bold font-tc">總抽取次數</div>
+                <div class="text-base sm:text-lg font-black text-blue-800 font-tc">{{ totalPulls }} <span class="text-xs font-normal">次</span></div>
+              </div>
+              <div class="maple-paper p-2 rounded text-center border-amber-500 bg-amber-50">
+                <div class="text-[10px] text-amber-800 font-bold font-tc flex items-center justify-center gap-1">
+                  <span>🌟 歐皇降臨</span>
+                </div>
+                <div class="text-base sm:text-lg font-black text-amber-600 font-tc">{{ luckyPullsCount }} <span class="text-xs font-normal">次</span></div>
+              </div>
+              <div class="maple-paper p-2 rounded text-center">
+                <div class="text-[10px] text-gray-600 font-bold font-tc">獲得種類</div>
+                <div class="text-base sm:text-lg font-black text-emerald-700 font-tc">{{ statsAggregatedList.length }} <span class="text-xs font-normal">種</span></div>
+              </div>
+              <div class="maple-paper p-2 rounded text-center">
+                <div class="text-[10px] text-gray-600 font-bold font-tc">歐皇觸發率</div>
+                <div class="text-base sm:text-lg font-black text-purple-700 font-tc">
+                  {{ totalPulls > 0 ? ((luckyPullsCount / totalPulls) * 100).toFixed(2) : '0.00' }}%
+                </div>
+              </div>
+            </div>
+
+            <!-- 歐皇專屬戰報榮譽榜 -->
+            <div class="maple-sunken p-2 sm:p-2.5 rounded mb-2.5 sm:mb-3 bg-amber-50/70 border-amber-400">
+              <div class="flex items-center justify-between mb-1.5 pb-1 border-b border-amber-300">
+                <span class="text-xs font-bold text-amber-900 flex items-center gap-1.5 font-tc">
+                  <span>👑</span>
+                  <span>歐皇戰報（已抽到機率 ≤ 0.09% 的大獎）</span>
+                </span>
+                <span class="text-[10px] text-amber-700 shrink-0">共 {{ luckyList.length }} 項</span>
+              </div>
+
+              <div v-if="luckyList.length === 0" class="text-center py-2.5 text-xs text-gray-500 font-tc">
+                尚未抽到歐皇道具（機率 ≤ 0.09%），再接再厲！💪
+              </div>
+              <div v-else class="flex flex-wrap gap-1 sm:gap-1.5 max-h-24 overflow-y-auto">
+                <div v-for="lk in luckyList" :key="lk.name"
+                     class="flex items-center gap-1.5 px-2 py-0.5 bg-amber-100 border border-amber-400 rounded text-xs font-tc text-amber-900 shadow-sm">
+                  <img :src="lk.icon" :alt="lk.name" class="w-4 h-4 object-contain shrink-0" />
+                  <span class="font-bold truncate max-w-[120px]">{{ lk.name }}</span>
+                  <span class="font-pixel text-[9px] text-amber-700 bg-amber-200 px-1 rounded shrink-0">×{{ lk.count }}</span>
+                  <span class="text-[9px] text-gray-500 shrink-0">({{ (lk.weight * 100).toFixed(4) }}%)</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 全部已抽到道具數量分別加總表 (全自適應排版，手機無礙閱讀) -->
+            <div class="maple-sunken p-2 sm:p-3 rounded">
+              <div class="flex flex-col xs:flex-row xs:items-center justify-between gap-1.5 mb-2">
+                <span class="text-xs font-bold text-gray-800 font-tc">📋 各道具抽得數量加總一覽表</span>
+                <div class="flex items-center gap-1.5 text-xs font-tc self-end xs:self-auto">
+                  <button class="px-1.5 py-0.5 rounded border text-[11px]"
+                          :class="statsSort === 'count' ? 'bg-amber-500 text-white border-amber-600 font-bold' : 'bg-white border-gray-300 text-gray-700'"
+                          @click="statsSort = 'count'">
+                    數量 ↓
+                  </button>
+                  <button class="px-1.5 py-0.5 rounded border text-[11px]"
+                          :class="statsSort === 'rate' ? 'bg-amber-500 text-white border-amber-600 font-bold' : 'bg-white border-gray-300 text-gray-700'"
+                          @click="statsSort = 'rate'">
+                    機率 ↓
+                  </button>
+                  <button class="maple-btn maple-btn-red text-[10px] py-0.5 px-1.5" @click="resetStats">重置</button>
+                </div>
+              </div>
+
+              <div v-if="statsAggregatedList.length === 0" class="text-center py-8 text-xs text-gray-500 font-tc">
+                目前尚無抽卡數據。
+              </div>
+
+              <div v-else class="max-h-60 overflow-y-auto pr-1">
+                <table class="w-full text-left font-tc border-collapse text-xs">
+                  <thead>
+                    <tr class="border-b-2 border-gray-400 text-gray-700 font-bold bg-[#E4DFD5]">
+                      <th class="py-1 px-1.5 sm:px-2">道具名稱</th>
+                      <th class="py-1 px-1 sm:px-2 text-center w-14 sm:w-20">數量</th>
+                      <th class="py-1 px-1 sm:px-2 text-right w-16 sm:w-20 hidden sm:table-cell">總抽佔比</th>
+                      <th class="py-1 px-1 sm:px-2 text-right w-16 sm:w-24">原廠機率</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="item in statsAggregatedList" :key="item.name"
+                        class="border-b border-gray-300 hover:bg-white/60 transition-colors"
+                        :class="{ 'bg-amber-50/80': item.isLucky }">
+                      <td class="py-1.5 px-1.5 sm:px-2 flex items-center gap-1.5 min-w-0">
+                        <img :src="item.icon" :alt="item.name" class="w-5 h-5 sm:w-6 sm:h-6 object-contain shrink-0" />
+                        <span :class="item.isLucky ? 'font-bold text-amber-900' : 'text-gray-800'" class="truncate">{{ item.name }}</span>
+                        <span v-if="item.isLucky" class="text-[8px] bg-amber-400 text-amber-950 px-1 py-0.2 rounded font-black shrink-0">歐皇</span>
+                      </td>
+                      <td class="py-1.5 px-1 sm:px-2 text-center font-bold text-xs sm:text-sm text-blue-900 font-tc shrink-0">
+                        × {{ item.count }}
+                      </td>
+                      <td class="py-1.5 px-1 sm:px-2 text-right font-medium text-gray-700 text-[11px] sm:text-xs hidden sm:table-cell shrink-0">
+                        {{ ((item.count / totalPulls) * 100).toFixed(1) }}%
+                      </td>
+                      <td class="py-1.5 px-1 sm:px-2 text-right text-gray-500 font-mono text-[10px] sm:text-[11px] shrink-0">
+                        {{ (item.weight * 100).toFixed(4) }}%
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- ================= TAB 3: 官方機率表 ================= -->
+          <div v-if="activeTab === 'pool'">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-2">
+              <div>
+                <span class="text-xs font-bold text-gray-800 font-tc">{{ activePool.name }} 機率表 (共 {{ activePool.items.length }} 項)</span>
+                <p class="text-[11px] text-gray-500 font-tc">{{ activePool.description }} · 機率 ≤ 0.09% 歸為歐皇</p>
+              </div>
+            </div>
+
+            <div class="maple-sunken p-2 sm:p-2.5 rounded max-h-80 overflow-y-auto">
+              <table class="w-full text-left font-tc border-collapse text-xs">
+                <thead>
+                  <tr class="border-b-2 border-gray-400 text-gray-700 font-bold bg-[#E4DFD5]">
+                    <th class="py-1.5 px-1.5 w-12 sm:w-16">分類</th>
+                    <th class="py-1.5 px-1.5">道具名稱</th>
+                    <th class="py-1.5 px-1.5 text-right w-20 sm:w-28">公布機率 (%)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="item in activePool.items" :key="item.name"
+                      class="border-b border-gray-300 hover:bg-white/60"
+                      :class="{ 'bg-amber-50': item.isLucky }">
+                    <td class="py-1 px-1.5 shrink-0">
+                      <span v-if="item.isLucky" class="text-[9px] bg-amber-500 text-white font-bold px-1 py-0.5 rounded">歐皇</span>
+                      <span v-else class="text-[9px] bg-gray-400 text-white px-1 py-0.5 rounded">一般</span>
+                    </td>
+                    <td class="py-1 px-1.5 flex items-center gap-1.5 min-w-0">
+                      <img :src="item.icon" :alt="item.name" class="w-5 h-5 object-contain shrink-0" />
+                      <span :class="item.isLucky ? 'font-bold text-amber-900' : 'text-gray-800'" class="truncate">{{ item.name }}</span>
+                    </td>
+                    <td class="py-1 px-1.5 text-right font-mono text-[10px] sm:text-[11px] text-gray-700 shrink-0">
+                      {{ (item.weight * 100).toFixed(6) }}%
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 楓之谷 NPC 對話框風格開獎彈窗 (完美防溢出、單一捲軸容器、直覺關閉) ================= -->
+  <div v-if="showResultModal"
+       class="fixed inset-0 bg-black/85 flex flex-col items-center justify-start sm:justify-center z-50 p-2 sm:p-4 overflow-y-auto"
+       @click.self="closeResultModal">
+    
+    <div class="maple-window max-w-lg w-full animate-scale-in my-auto flex flex-col max-h-[90vh] shadow-2xl overflow-hidden">
+      <!-- 對話框藍條標題 (shrink-0 固定不擠壓) -->
+      <div class="maple-titlebar shrink-0">
+        <div class="maple-title-text truncate">
+          <span>🍁</span>
+          <span class="truncate">{{ activePool.name }} - 轉蛋結果通知</span>
+        </div>
+        <div class="maple-close-btn shrink-0" @click="closeResultModal">X</div>
+      </div>
+
+      <!-- 對話主體區 -->
+      <div class="p-2.5 sm:p-4 font-tc flex-1 min-h-0 flex flex-col overflow-hidden">
+
+        <!-- 歐皇橫幅特效 (若抽中機率 <= 0.09% 道具) -->
+        <div v-if="hasLuckyPull" class="mb-2 p-2 bg-gradient-to-r from-amber-200 via-yellow-100 to-amber-200 border-2 border-amber-500 rounded text-center shadow animate-pulse shrink-0">
+          <div class="text-xs sm:text-sm font-black text-amber-900 tracking-wide flex items-center justify-center gap-1 flex-wrap">
+            <span>🎉</span>
+            <span>【 歐 皇 降 臨 】！恭喜獲得夢幻大獎！</span>
+            <span>🎉</span>
+          </div>
+          <div class="text-[10px] sm:text-xs text-amber-800 mt-0.5">突破 0.09% 極限機率，運氣爆棚！</div>
+        </div>
+
+        <!-- NPC 對話開場 (MapleStory 經典 NPC 對話框) -->
+        <div class="flex items-center gap-2 sm:gap-3 mb-2 bg-[#F8F6F0] p-2 rounded border-2 border-[#8C867C] shadow-inner font-tc shrink-0">
+          <img src="./images/gachapon-npc.webp" alt="Gachapon NPC" 
+               class="w-10 sm:w-12 h-10 sm:h-12 object-contain shrink-0 filter drop-shadow" 
+               style="image-rendering: pixelated;" />
+          <div class="flex-1 min-w-0">
+            <div class="text-xs font-black text-[#1F3652] flex items-center gap-1.5">
+              <span class="px-1.5 py-0.2 bg-black/80 text-amber-300 text-[9px] rounded border border-amber-400 shrink-0">NPC</span>
+              <span class="truncate">轉蛋機 (Gachapon)</span>
+            </div>
+            <p class="text-[11px] sm:text-xs text-gray-800 leading-snug mt-0.5">
+              「喀噠……喀噠……！轉蛋機轉動完畢，掉出了 <strong>{{ currentResults.length }}</strong> 個道具！」
+            </p>
+          </div>
+        </div>
+
+        <!-- 獎勵展示槽 (內部獨立滾動，不破壞彈窗高度) -->
+        <div class="maple-sunken p-2 rounded flex-1 min-h-0 flex flex-col overflow-hidden">
+          <!-- 頂部切換檢視與摘要 -->
+          <div class="flex items-center justify-between pb-1.5 mb-1.5 border-b border-gray-300 text-xs shrink-0">
+            <span class="text-gray-700 font-bold text-[11px] sm:text-xs truncate">
+              本次抽得明細 (共 {{ currentResults.length }} 筆)
+            </span>
+            <div class="flex items-center gap-1 shrink-0">
+              <button class="px-2 py-0.5 rounded text-[10px] sm:text-[11px] font-bold border transition-all"
+                      :class="resultViewMode === 'list' ? 'bg-amber-500 text-white border-amber-600' : 'bg-white text-gray-700 border-gray-300'"
+                      @click="resultViewMode = 'list'">
+                逐筆明細
+              </button>
+              <button class="px-2 py-0.5 rounded text-[10px] sm:text-[11px] font-bold border transition-all"
+                      :class="resultViewMode === 'summary' ? 'bg-amber-500 text-white border-amber-600' : 'bg-white text-gray-700 border-gray-300'"
+                      @click="resultViewMode = 'summary'">
+                數量彙整
+              </button>
+            </div>
+          </div>
+
+          <!-- 一行一行文字列表 (單一垂直捲動區，無巢狀滑動衝突) -->
+          <div class="overflow-y-auto flex-1 min-h-0 space-y-1 pr-1 font-tc text-xs">
+            <!-- 模式 1: 逐筆一行一行列出 -->
+            <template v-if="resultViewMode === 'list'">
+              <div v-for="(res, idx) in currentResults" :key="idx"
+                   class="flex items-center justify-between p-1.5 rounded border transition-all"
+                   :class="res.isLucky 
+                     ? 'bg-amber-100/95 border-amber-400 text-amber-950 font-bold shadow-sm' 
+                     : 'bg-white/90 border-gray-200 text-gray-800 hover:bg-white'">
+                <div class="flex items-center gap-1.5 min-w-0">
+                  <span class="text-gray-400 font-mono text-[9px] w-5 shrink-0">#{{ idx + 1 }}</span>
+                  <img :src="res.icon" :alt="res.name" class="w-5 h-5 sm:w-6 sm:h-6 object-contain shrink-0" />
+                  <span class="text-[11px] sm:text-xs truncate">{{ res.name }}</span>
+                  <span v-if="res.isLucky" class="text-[8px] bg-amber-500 text-white px-1 py-0.2 rounded font-black shrink-0">
+                    🌟 歐皇
+                  </span>
+                </div>
+                <div class="text-right text-[10px] sm:text-[11px] text-gray-500 font-mono shrink-0 pl-1">
+                  {{ (res.weight * 100).toFixed(4) }}%
+                </div>
+              </div>
+            </template>
+
+            <!-- 模式 2: 本次抽得道具數量彙整一行一行列出 -->
+            <template v-else>
+              <div v-for="item in currentResultsAggregated" :key="item.name"
+                   class="flex items-center justify-between p-1.5 rounded border"
+                   :class="item.isLucky 
+                     ? 'bg-amber-100/95 border-amber-400 text-amber-950 font-bold shadow-sm' 
+                     : 'bg-white/90 border-gray-200 text-gray-800'">
+                <div class="flex items-center gap-1.5 min-w-0">
+                  <img :src="item.icon" :alt="item.name" class="w-5 h-5 sm:w-6 sm:h-6 object-contain shrink-0" />
+                  <span class="text-[11px] sm:text-xs truncate">{{ item.name }}</span>
+                  <span v-if="item.isLucky" class="text-[8px] bg-amber-500 text-white px-1 py-0.2 rounded font-black shrink-0">
+                    🌟 歐皇
+                  </span>
+                </div>
+                <div class="flex items-center gap-2 shrink-0 pl-1">
+                  <span class="font-bold text-xs sm:text-sm text-blue-900">× {{ item.count }}</span>
+                  <span class="text-[10px] text-gray-400 font-mono text-right w-14 sm:w-16">{{ (item.weight * 100).toFixed(3) }}%</span>
+                </div>
+              </div>
+            </template>
+          </div>
+        </div>
+
+        <!-- 底部操作按鈕 (固定底端) -->
+        <div class="flex items-center justify-center gap-2 mt-2.5 shrink-0">
+          <button class="maple-btn maple-btn-blue px-3 sm:px-5 py-1.5 text-xs sm:text-sm shadow-md"
+                  @click="goToInventoryFromModal">
+            <span>🎒 查看背包</span>
+          </button>
+          <button class="maple-btn px-5 sm:px-7 py-1.5 text-xs sm:text-sm shadow-md"
+                  @click="closeResultModal">
+            <span>確認收下</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const { createApp, ref, computed, onMounted } = Vue;
+
+// 本地道具圖庫 (專案 images 目錄，各百分比卷軸獨立專屬圖案)
+function getItemIcon(name) {
+  // 1. 藥水系列
+  if (name.includes('超級藥水')) return './images/power-elixir.webp';
+  if (name.includes('黃昏之露')) return './images/sunset-dew.webp';
+  if (name.includes('清晨之露')) return './images/sunrise-dew.webp';
+  if (name.includes('馴鹿奶')) return './images/reindeer-milk.webp';
+
+  // 2. 騎寵系列
+  if (name.includes('騎寵')) return './images/mount.webp';
+
+  // 3. 卷軸系列 (突襲轉蛋券Ⅰ & Ⅱ)
+  if (name.includes('每週突襲重置卷軸')) return './images/reset-scroll.webp';
+  if (name.includes('10%')) return './images/scroll-10.webp';
+  if (name.includes('30%')) return './images/scroll-30.webp';
+  if (name.includes('60%')) return './images/scroll-60.webp';
+  if (name.includes('70%')) return './images/scroll-70.webp';
+  if (name.includes('100%')) return './images/scroll-100.webp';
+  if (name.includes('卷軸')) return './images/scroll-60.webp';
+  if (name.includes('箱') && !name.includes('椅')) return './images/box.webp';
+
+  // 4. 其餘全部（月光祭非藥水、非騎寵的所有品項，包含各類椅子、字型、戒指、裝飾道具）統一使用經典椅子圖案
+  return './images/chair.webp';
+}
+
+// 所有 Artale 官方「轉蛋」完整資料庫
+const ALL_GACHA_POOLS = [
+  {
+    "id": "moonlight",
+    "name": "月光祭轉蛋券",
+    "shortName": "🌕 月光祭",
+    "ticketName": "月光祭轉蛋券",
+    "description": "除騎寵造型、傷害字型造型、裝飾戒指外皆可交易",
+    "items": [
+      {
+        "name": "滿月傷害字型",
+        "weight": 0.0000125,
+        "rate": 0.00125,
+        "isLucky": true
+      },
+      {
+        "name": "狐狸月亮騎寵",
+        "weight": 0.0009090909,
+        "rate": 0.09090909,
+        "isLucky": true
+      },
+      {
+        "name": "美味松糕騎寵",
+        "weight": 0.0009090909,
+        "rate": 0.09090909,
+        "isLucky": true
+      },
+      {
+        "name": "深夜蝴蝶庭園",
+        "weight": 0.0009090909,
+        "rate": 0.09090909,
+        "isLucky": true
+      },
+      {
+        "name": "休菲凱曼的直火炭烤椅子",
+        "weight": 0.0009090909,
+        "rate": 0.09090909,
+        "isLucky": true
+      },
+      {
+        "name": "經典餐車椅",
+        "weight": 0.0018181818,
+        "rate": 0.18181818,
+        "isLucky": false
+      },
+      {
+        "name": "華麗餐車椅",
+        "weight": 0.0018181818,
+        "rate": 0.18181818,
+        "isLucky": false
+      },
+      {
+        "name": "森林裡休息椅子：木屋",
+        "weight": 0.0018181818,
+        "rate": 0.18181818,
+        "isLucky": false
+      },
+      {
+        "name": "迎月花大臉椅子",
+        "weight": 0.0018181818,
+        "rate": 0.18181818,
+        "isLucky": false
+      },
+      {
+        "name": "可愛兔兔名牌戒指",
+        "weight": 0.0018181818,
+        "rate": 0.18181818,
+        "isLucky": false
+      },
+      {
+        "name": "可愛兔兔聊天戒指",
+        "weight": 0.0018181818,
+        "rate": 0.18181818,
+        "isLucky": false
+      },
+      {
+        "name": "夏鈴名牌戒指",
+        "weight": 0.0018181818,
+        "rate": 0.18181818,
+        "isLucky": false
+      },
+      {
+        "name": "夏鈴聊天戒指",
+        "weight": 0.0018181818,
+        "rate": 0.18181818,
+        "isLucky": false
+      },
+      {
+        "name": "殺人鯨的兔子之愛椅子",
+        "weight": 0.0027272727,
+        "rate": 0.27272727,
+        "isLucky": false
+      },
+      {
+        "name": "與兔子一同慵懶椅子",
+        "weight": 0.0027272727,
+        "rate": 0.27272727,
+        "isLucky": false
+      },
+      {
+        "name": "月光玻璃杯",
+        "weight": 0.0027272727,
+        "rate": 0.27272727,
+        "isLucky": false
+      },
+      {
+        "name": "大熊娃娃椅子",
+        "weight": 0.0027272727,
+        "rate": 0.27272727,
+        "isLucky": false
+      },
+      {
+        "name": "跳跳兔禮物包裝貨車",
+        "weight": 0.0027272727,
+        "rate": 0.27272727,
+        "isLucky": false
+      },
+      {
+        "name": "搗麻糬椅子",
+        "weight": 0.0036363636,
+        "rate": 0.36363636,
+        "isLucky": false
+      },
+      {
+        "name": "烏鴉與我椅子",
+        "weight": 0.0036363636,
+        "rate": 0.36363636,
+        "isLucky": false
+      },
+      {
+        "name": "迎月花椅子",
+        "weight": 0.0036363636,
+        "rate": 0.36363636,
+        "isLucky": false
+      },
+      {
+        "name": "梅好的夜晚",
+        "weight": 0.0036363636,
+        "rate": 0.36363636,
+        "isLucky": false
+      },
+      {
+        "name": "殺人鯨的兔娃娃",
+        "weight": 0.0036363636,
+        "rate": 0.36363636,
+        "isLucky": false
+      },
+      {
+        "name": "玩偶之家",
+        "weight": 0.0036363636,
+        "rate": 0.36363636,
+        "isLucky": false
+      },
+      {
+        "name": "星光灑滿的山丘椅子",
+        "weight": 0.0316666667,
+        "rate": 3.16666667,
+        "isLucky": false
+      },
+      {
+        "name": "美夢枕",
+        "weight": 0.0316666667,
+        "rate": 3.16666667,
+        "isLucky": false
+      },
+      {
+        "name": "保冷箱椅子",
+        "weight": 0.0316666667,
+        "rate": 3.16666667,
+        "isLucky": false
+      },
+      {
+        "name": "貓咪椅子",
+        "weight": 0.0316666667,
+        "rate": 3.16666667,
+        "isLucky": false
+      },
+      {
+        "name": "遠東福運椅",
+        "weight": 0.0316666667,
+        "rate": 3.16666667,
+        "isLucky": false
+      },
+      {
+        "name": "煙花椅子",
+        "weight": 0.0316666667,
+        "rate": 3.16666667,
+        "isLucky": false
+      },
+      {
+        "name": "聊天用貓咪坐墊椅子",
+        "weight": 0.0316666667,
+        "rate": 3.16666667,
+        "isLucky": false
+      },
+      {
+        "name": "圖書館椅子(領導)",
+        "weight": 0.0316666667,
+        "rate": 3.16666667,
+        "isLucky": false
+      },
+      {
+        "name": "圖書館椅子(感性)",
+        "weight": 0.0316666667,
+        "rate": 3.16666667,
+        "isLucky": false
+      },
+      {
+        "name": "圖書館椅子(洞察)",
+        "weight": 0.037996875,
+        "rate": 3.7996875,
+        "isLucky": false
+      },
+      {
+        "name": "圖書館椅子(意志)",
+        "weight": 0.037996875,
+        "rate": 3.7996875,
+        "isLucky": false
+      },
+      {
+        "name": "圖書館椅子(手藝)",
+        "weight": 0.037996875,
+        "rate": 3.7996875,
+        "isLucky": false
+      },
+      {
+        "name": "圖書館椅子(魅力)",
+        "weight": 0.037996875,
+        "rate": 3.7996875,
+        "isLucky": false
+      },
+      {
+        "name": "超級藥水 10個(可交易)",
+        "weight": 0.0443333333,
+        "rate": 4.43333333,
+        "isLucky": false
+      },
+      {
+        "name": "超級藥水 15個(可交易)",
+        "weight": 0.038,
+        "rate": 3.8,
+        "isLucky": false
+      },
+      {
+        "name": "超級藥水 20個(可交易)",
+        "weight": 0.0316666667,
+        "rate": 3.16666667,
+        "isLucky": false
+      },
+      {
+        "name": "黃昏之露 10個(可交易)",
+        "weight": 0.0494545457,
+        "rate": 4.94545457,
+        "isLucky": false
+      },
+      {
+        "name": "黃昏之露 30個(可交易)",
+        "weight": 0.0443333333,
+        "rate": 4.43333333,
+        "isLucky": false
+      },
+      {
+        "name": "黃昏之露 50個(可交易)",
+        "weight": 0.038,
+        "rate": 3.8,
+        "isLucky": false
+      },
+      {
+        "name": "清晨之露 20個(可交易)",
+        "weight": 0.0494545455,
+        "rate": 4.94545455,
+        "isLucky": false
+      },
+      {
+        "name": "清晨之露 40個(可交易)",
+        "weight": 0.0443333333,
+        "rate": 4.43333333,
+        "isLucky": false
+      },
+      {
+        "name": "清晨之露 60個(可交易)",
+        "weight": 0.038,
+        "rate": 3.8,
+        "isLucky": false
+      },
+      {
+        "name": "馴鹿奶 30個(可交易)",
+        "weight": 0.0494545455,
+        "rate": 4.94545455,
+        "isLucky": false
+      },
+      {
+        "name": "馴鹿奶 50個(可交易)",
+        "weight": 0.0443333333,
+        "rate": 4.43333333,
+        "isLucky": false
+      },
+      {
+        "name": "馴鹿奶 70個(可交易)",
+        "weight": 0.038,
+        "rate": 3.8,
+        "isLucky": false
+      }
+    ]
+  },
+  {
+    "id": "weekly_raid_1",
+    "name": "每週突襲重置卷軸精選轉蛋券Ⅰ",
+    "shortName": "⚔️ 突襲 Ⅰ",
+    "ticketName": "每週突襲重置卷軸精選轉蛋券Ⅰ",
+    "description": "力量/幸運系列 30% 卷軸、每週突襲重置卷軸、純白卷軸箱、戒指卷軸箱",
+    "items": [
+      {
+        "name": "戒指卷軸箱",
+        "weight": 0.000008333331606991,
+        "rate": 0.0008333331606991,
+        "isLucky": true
+      },
+      {
+        "name": "臉部裝飾力量卷軸30%",
+        "weight": 0.000083333316069911,
+        "rate": 0.0083333316069911,
+        "isLucky": true
+      },
+      {
+        "name": "臉部裝飾幸運卷軸30%",
+        "weight": 0.000083333316069911,
+        "rate": 0.0083333316069911,
+        "isLucky": true
+      },
+      {
+        "name": "純白卷軸箱",
+        "weight": 0.000104166656456072,
+        "rate": 0.0104166656456072,
+        "isLucky": true
+      },
+      {
+        "name": "每週突襲重置卷軸",
+        "weight": 0.000104166656456072,
+        "rate": 0.0104166656456072,
+        "isLucky": true
+      },
+      {
+        "name": "眼部裝飾力量卷軸30%",
+        "weight": 0.000124999996842234,
+        "rate": 0.0124999996842234,
+        "isLucky": true
+      },
+      {
+        "name": "腰帶敏捷卷軸30%",
+        "weight": 0.000124999996842234,
+        "rate": 0.0124999996842234,
+        "isLucky": true
+      },
+      {
+        "name": "墜飾力量卷軸30%",
+        "weight": 0.000124999996842234,
+        "rate": 0.0124999996842234,
+        "isLucky": true
+      },
+      {
+        "name": "眼部裝飾幸運卷軸30%",
+        "weight": 0.000124999996842234,
+        "rate": 0.0124999996842234,
+        "isLucky": true
+      },
+      {
+        "name": "腰帶幸運卷軸30%",
+        "weight": 0.000200000022232416,
+        "rate": 0.0200000022232416,
+        "isLucky": true
+      },
+      {
+        "name": "墜飾智力卷軸30%",
+        "weight": 0.000200000022232416,
+        "rate": 0.0200000022232416,
+        "isLucky": true
+      },
+      {
+        "name": "套服力量詛咒卷軸30%",
+        "weight": 0.000200000022232416,
+        "rate": 0.0200000022232416,
+        "isLucky": true
+      },
+      {
+        "name": "下衣敏捷性卷軸30%",
+        "weight": 0.000200000022232416,
+        "rate": 0.0200000022232416,
+        "isLucky": true
+      },
+      {
+        "name": "耳環智力卷軸30%",
+        "weight": 0.000200000022232416,
+        "rate": 0.0200000022232416,
+        "isLucky": true
+      },
+      {
+        "name": "套服幸運詛咒卷軸30%",
+        "weight": 0.00033333335522911495,
+        "rate": 0.0333333355229115,
+        "isLucky": true
+      },
+      {
+        "name": "頭盔智力卷軸30%",
+        "weight": 0.00033333335522911495,
+        "rate": 0.0333333355229115,
+        "isLucky": true
+      },
+      {
+        "name": "披風敏捷性卷軸30%",
+        "weight": 0.00033333335522911495,
+        "rate": 0.0333333355229115,
+        "isLucky": true
+      },
+      {
+        "name": "上衣力量卷軸30%",
+        "weight": 0.00033333335522911495,
+        "rate": 0.0333333355229115,
+        "isLucky": true
+      },
+      {
+        "name": "短杖魔力卷軸30%",
+        "weight": 0.00033333335522911495,
+        "rate": 0.0333333355229115,
+        "isLucky": true
+      },
+      {
+        "name": "套服敏捷詛咒卷軸30%",
+        "weight": 0.00033333335522911495,
+        "rate": 0.0333333355229115,
+        "isLucky": true
+      },
+      {
+        "name": "披風智力卷軸30%",
+        "weight": 0.0008888889169611499,
+        "rate": 0.088888891696115,
+        "isLucky": true
+      },
+      {
+        "name": "矛攻擊力卷軸30%",
+        "weight": 0.0008888889169611499,
+        "rate": 0.088888891696115,
+        "isLucky": true
+      },
+      {
+        "name": "短劍攻擊力卷軸30%",
+        "weight": 0.0008888889169611499,
+        "rate": 0.088888891696115,
+        "isLucky": true
+      },
+      {
+        "name": "指虎攻擊力卷軸30%",
+        "weight": 0.0008888889169611499,
+        "rate": 0.088888891696115,
+        "isLucky": true
+      },
+      {
+        "name": "鞋子跳躍力卷軸30%",
+        "weight": 0.0008888889169611499,
+        "rate": 0.088888891696115,
+        "isLucky": true
+      },
+      {
+        "name": "指虎命中率卷軸30%",
+        "weight": 0.0008888889169611499,
+        "rate": 0.088888891696115,
+        "isLucky": true
+      },
+      {
+        "name": "弩攻擊力卷軸30%",
+        "weight": 0.0008888889169611499,
+        "rate": 0.088888891696115,
+        "isLucky": true
+      },
+      {
+        "name": "鞋子移動速度卷軸30%",
+        "weight": 0.0008888889169611499,
+        "rate": 0.088888891696115,
+        "isLucky": true
+      },
+      {
+        "name": "下衣跳躍卷軸30%",
+        "weight": 0.0008888889169611499,
+        "rate": 0.088888891696115,
+        "isLucky": true
+      },
+      {
+        "name": "下衣體力卷軸30%",
+        "weight": 0.017582023774211898,
+        "rate": 1.75820237742119,
+        "isLucky": false
+      },
+      {
+        "name": "單手劍命中率卷軸30%",
+        "weight": 0.017582023774211898,
+        "rate": 1.75820237742119,
+        "isLucky": false
+      },
+      {
+        "name": "手套體力卷軸30%",
+        "weight": 0.017582023774211898,
+        "rate": 1.75820237742119,
+        "isLucky": false
+      },
+      {
+        "name": "單手劍攻擊力卷軸30%",
+        "weight": 0.017582023774211898,
+        "rate": 1.75820237742119,
+        "isLucky": false
+      },
+      {
+        "name": "盾牌防禦力卷軸30%",
+        "weight": 0.017582023774211898,
+        "rate": 1.75820237742119,
+        "isLucky": false
+      },
+      {
+        "name": "下衣防禦力卷軸30%",
+        "weight": 0.017582023774211898,
+        "rate": 1.75820237742119,
+        "isLucky": false
+      },
+      {
+        "name": "上衣防禦力卷軸30%",
+        "weight": 0.0205820237742119,
+        "rate": 2.05820237742119,
+        "isLucky": false
+      },
+      {
+        "name": "頭盔防禦卷軸30%",
+        "weight": 0.0205820237742119,
+        "rate": 2.05820237742119,
+        "isLucky": false
+      },
+      {
+        "name": "披風物理防禦力卷軸30%",
+        "weight": 0.0205820237742119,
+        "rate": 2.05820237742119,
+        "isLucky": false
+      },
+      {
+        "name": "單手斧命中率卷軸30%",
+        "weight": 0.0205820237742119,
+        "rate": 2.05820237742119,
+        "isLucky": false
+      },
+      {
+        "name": "單手棍命中率卷軸30%",
+        "weight": 0.0205820237742119,
+        "rate": 2.05820237742119,
+        "isLucky": false
+      },
+      {
+        "name": "雙手棍攻擊力卷軸30%",
+        "weight": 0.0205820237742119,
+        "rate": 2.05820237742119,
+        "isLucky": false
+      },
+      {
+        "name": "披風魔法防禦力卷軸30%",
+        "weight": 0.0205820237742119,
+        "rate": 2.05820237742119,
+        "isLucky": false
+      },
+      {
+        "name": "槍命中率卷軸30%",
+        "weight": 0.0205820237742119,
+        "rate": 2.05820237742119,
+        "isLucky": false
+      },
+      {
+        "name": "超級藥水 10個(可交易)",
+        "weight": 0.0602143750048561,
+        "rate": 6.02143750048561,
+        "isLucky": false
+      },
+      {
+        "name": "超級藥水 15個(可交易)",
+        "weight": 0.058714375004856094,
+        "rate": 5.87143750048561,
+        "isLucky": false
+      },
+      {
+        "name": "超級藥水 20個(可交易)",
+        "weight": 0.0572143750048561,
+        "rate": 5.72143750048561,
+        "isLucky": false
+      },
+      {
+        "name": "黃昏之露 10個(可交易)",
+        "weight": 0.0617143750048562,
+        "rate": 6.17143750048562,
+        "isLucky": false
+      },
+      {
+        "name": "黃昏之露 30個(可交易)",
+        "weight": 0.0602143750048561,
+        "rate": 6.02143750048561,
+        "isLucky": false
+      },
+      {
+        "name": "黃昏之露 50個(可交易)",
+        "weight": 0.058714375004856094,
+        "rate": 5.87143750048561,
+        "isLucky": false
+      },
+      {
+        "name": "清晨之露 20個(可交易)",
+        "weight": 0.0617143750048562,
+        "rate": 6.17143750048562,
+        "isLucky": false
+      },
+      {
+        "name": "清晨之露 40個(可交易)",
+        "weight": 0.0602143750048561,
+        "rate": 6.02143750048561,
+        "isLucky": false
+      },
+      {
+        "name": "清晨之露 60個(可交易)",
+        "weight": 0.058714375004856094,
+        "rate": 5.87143750048561,
+        "isLucky": false
+      },
+      {
+        "name": "馴鹿奶 30個(可交易)",
+        "weight": 0.0617143750048562,
+        "rate": 6.17143750048562,
+        "isLucky": false
+      },
+      {
+        "name": "馴鹿奶 50個(可交易)",
+        "weight": 0.0602143750048561,
+        "rate": 6.02143750048561,
+        "isLucky": false
+      },
+      {
+        "name": "馴鹿奶 70個(可交易)",
+        "weight": 0.0586102083484014,
+        "rate": 5.86102083484014,
+        "isLucky": false
+      }
+    ]
+  },
+  {
+    "id": "weekly_raid_2",
+    "name": "每週突襲重置卷軸精選轉蛋券Ⅱ",
+    "shortName": "🏹 突襲 Ⅱ",
+    "ticketName": "每週突襲重置卷軸精選轉蛋券Ⅱ",
+    "description": "敏捷/智力系列 30% 卷軸、每週突襲重置卷軸、純白卷軸箱、戒指卷軸箱",
+    "items": [
+      {
+        "name": "戒指卷軸箱",
+        "weight": 0.000008333331606991,
+        "rate": 0.0008333331606991,
+        "isLucky": true
+      },
+      {
+        "name": "臉部裝飾敏捷卷軸30%",
+        "weight": 0.000083333316069911,
+        "rate": 0.0083333316069911,
+        "isLucky": true
+      },
+      {
+        "name": "臉部裝飾智力卷軸30%",
+        "weight": 0.000083333316069911,
+        "rate": 0.0083333316069911,
+        "isLucky": true
+      },
+      {
+        "name": "純白卷軸箱",
+        "weight": 0.000104166656456072,
+        "rate": 0.0104166656456072,
+        "isLucky": true
+      },
+      {
+        "name": "每週突襲重置卷軸",
+        "weight": 0.000104166656456072,
+        "rate": 0.0104166656456072,
+        "isLucky": true
+      },
+      {
+        "name": "腰帶力量卷軸30%",
+        "weight": 0.000124999996842234,
+        "rate": 0.0124999996842234,
+        "isLucky": true
+      },
+      {
+        "name": "眼部裝飾智力卷軸30%",
+        "weight": 0.000124999996842234,
+        "rate": 0.0124999996842234,
+        "isLucky": true
+      },
+      {
+        "name": "墜飾敏捷卷軸30%",
+        "weight": 0.000124999996842234,
+        "rate": 0.0124999996842234,
+        "isLucky": true
+      },
+      {
+        "name": "眼部裝飾敏捷卷軸30%",
+        "weight": 0.000124999996842234,
+        "rate": 0.0124999996842234,
+        "isLucky": true
+      },
+      {
+        "name": "墜飾幸運卷軸30%",
+        "weight": 0.000200000022232416,
+        "rate": 0.0200000022232416,
+        "isLucky": true
+      },
+      {
+        "name": "腰帶智力卷軸30%",
+        "weight": 0.000200000022232416,
+        "rate": 0.0200000022232416,
+        "isLucky": true
+      },
+      {
+        "name": "耳環敏捷卷軸30%",
+        "weight": 0.000200000022232416,
+        "rate": 0.0200000022232416,
+        "isLucky": true
+      },
+      {
+        "name": "頭盔敏捷卷軸30%",
+        "weight": 0.000200000022232416,
+        "rate": 0.0200000022232416,
+        "isLucky": true
+      },
+      {
+        "name": "套服智力詛咒卷軸30%",
+        "weight": 0.000200000022232416,
+        "rate": 0.0200000022232416,
+        "isLucky": true
+      },
+      {
+        "name": "拳套攻擊力卷軸30%",
+        "weight": 0.00033333335522911495,
+        "rate": 0.0333333355229115,
+        "isLucky": true
+      },
+      {
+        "name": "手套攻擊力卷軸30%",
+        "weight": 0.00033333335522911495,
+        "rate": 0.0333333355229115,
+        "isLucky": true
+      },
+      {
+        "name": "披風幸運卷軸30%",
+        "weight": 0.00033333335522911495,
+        "rate": 0.0333333355229115,
+        "isLucky": true
+      },
+      {
+        "name": "雙手劍攻擊力卷軸30%",
+        "weight": 0.00033333335522911495,
+        "rate": 0.0333333355229115,
+        "isLucky": true
+      },
+      {
+        "name": "上衣幸運卷軸30%",
+        "weight": 0.00033333335522911495,
+        "rate": 0.0333333355229115,
+        "isLucky": true
+      },
+      {
+        "name": "披風力量卷軸30%",
+        "weight": 0.00033333335522911495,
+        "rate": 0.0333333355229115,
+        "isLucky": true
+      },
+      {
+        "name": "長杖魔力卷軸30%",
+        "weight": 0.0008888889169611499,
+        "rate": 0.088888891696115,
+        "isLucky": true
+      },
+      {
+        "name": "弓攻擊力卷軸30%",
+        "weight": 0.0008888889169611499,
+        "rate": 0.088888891696115,
+        "isLucky": true
+      },
+      {
+        "name": "耳環幸運卷軸30%",
+        "weight": 0.0008888889169611499,
+        "rate": 0.088888891696115,
+        "isLucky": true
+      },
+      {
+        "name": "盾牌幸運卷軸30%",
+        "weight": 0.0008888889169611499,
+        "rate": 0.088888891696115,
+        "isLucky": true
+      },
+      {
+        "name": "手套敏捷性卷軸30%",
+        "weight": 0.0008888889169611499,
+        "rate": 0.088888891696115,
+        "isLucky": true
+      },
+      {
+        "name": "槍攻擊力卷軸30%",
+        "weight": 0.0008888889169611499,
+        "rate": 0.088888891696115,
+        "isLucky": true
+      },
+      {
+        "name": "火槍攻擊力卷軸30%",
+        "weight": 0.0008888889169611499,
+        "rate": 0.088888891696115,
+        "isLucky": true
+      },
+      {
+        "name": "盾牌力量卷軸30%",
+        "weight": 0.0008888889169611499,
+        "rate": 0.088888891696115,
+        "isLucky": true
+      },
+      {
+        "name": "耳環體力卷軸30%",
+        "weight": 0.0008888889169611499,
+        "rate": 0.088888891696115,
+        "isLucky": true
+      },
+      {
+        "name": "鞋子敏捷性卷軸30%",
+        "weight": 0.017582023774211898,
+        "rate": 1.75820237742119,
+        "isLucky": false
+      },
+      {
+        "name": "頭盔體力卷軸30%",
+        "weight": 0.017582023774211898,
+        "rate": 1.75820237742119,
+        "isLucky": false
+      },
+      {
+        "name": "披風體力卷軸30%",
+        "weight": 0.017582023774211898,
+        "rate": 1.75820237742119,
+        "isLucky": false
+      },
+      {
+        "name": "雙手斧攻擊力卷軸30%",
+        "weight": 0.017582023774211898,
+        "rate": 1.75820237742119,
+        "isLucky": false
+      },
+      {
+        "name": "雙手劍命中率卷軸30%",
+        "weight": 0.017582023774211898,
+        "rate": 1.75820237742119,
+        "isLucky": false
+      },
+      {
+        "name": "單手斧攻擊力卷軸30%",
+        "weight": 0.017582023774211898,
+        "rate": 1.75820237742119,
+        "isLucky": false
+      },
+      {
+        "name": "上衣體力卷軸30%",
+        "weight": 0.0205820237742119,
+        "rate": 2.05820237742119,
+        "isLucky": false
+      },
+      {
+        "name": "套服防禦詛咒卷軸30%",
+        "weight": 0.0205820237742119,
+        "rate": 2.05820237742119,
+        "isLucky": false
+      },
+      {
+        "name": "披風魔力卷軸30%",
+        "weight": 0.0205820237742119,
+        "rate": 2.05820237742119,
+        "isLucky": false
+      },
+      {
+        "name": "單手棍攻擊力卷軸30%",
+        "weight": 0.0205820237742119,
+        "rate": 2.05820237742119,
+        "isLucky": false
+      },
+      {
+        "name": "雙手斧命中率卷軸30%",
+        "weight": 0.0205820237742119,
+        "rate": 2.05820237742119,
+        "isLucky": false
+      },
+      {
+        "name": "盾牌體力卷軸30%",
+        "weight": 0.0205820237742119,
+        "rate": 2.05820237742119,
+        "isLucky": false
+      },
+      {
+        "name": "雙手棍命中率卷軸30%",
+        "weight": 0.0205820237742119,
+        "rate": 2.05820237742119,
+        "isLucky": false
+      },
+      {
+        "name": "矛命中率卷軸30%",
+        "weight": 0.0205820237742119,
+        "rate": 2.05820237742119,
+        "isLucky": false
+      },
+      {
+        "name": "超級藥水 10個(可交易)",
+        "weight": 0.0602143750048561,
+        "rate": 6.02143750048561,
+        "isLucky": false
+      },
+      {
+        "name": "超級藥水 15個(可交易)",
+        "weight": 0.058714375004856094,
+        "rate": 5.87143750048561,
+        "isLucky": false
+      },
+      {
+        "name": "超級藥水 20個(可交易)",
+        "weight": 0.0572143750048561,
+        "rate": 5.72143750048561,
+        "isLucky": false
+      },
+      {
+        "name": "黃昏之露 10個(可交易)",
+        "weight": 0.0617143750048562,
+        "rate": 6.17143750048562,
+        "isLucky": false
+      },
+      {
+        "name": "黃昏之露 30個(可交易)",
+        "weight": 0.0602143750048561,
+        "rate": 6.02143750048561,
+        "isLucky": false
+      },
+      {
+        "name": "黃昏之露 50個(可交易)",
+        "weight": 0.058714375004856094,
+        "rate": 5.87143750048561,
+        "isLucky": false
+      },
+      {
+        "name": "清晨之露 20個(可交易)",
+        "weight": 0.0617143750048562,
+        "rate": 6.17143750048562,
+        "isLucky": false
+      },
+      {
+        "name": "清晨之露 40個(可交易)",
+        "weight": 0.0602143750048561,
+        "rate": 6.02143750048561,
+        "isLucky": false
+      },
+      {
+        "name": "清晨之露 60個(可交易)",
+        "weight": 0.058714375004856094,
+        "rate": 5.87143750048561,
+        "isLucky": false
+      },
+      {
+        "name": "馴鹿奶 30個(可交易)",
+        "weight": 0.0617143750048562,
+        "rate": 6.17143750048562,
+        "isLucky": false
+      },
+      {
+        "name": "馴鹿奶 50個(可交易)",
+        "weight": 0.0602143750048561,
+        "rate": 6.02143750048561,
+        "isLucky": false
+      },
+      {
+        "name": "馴鹿奶 70個(可交易)",
+        "weight": 0.0586102083484014,
+        "rate": 5.86102083484014,
+        "isLucky": false
+      }
+    ]
+  }
+].map(p => ({
+  ...p,
+  items: p.items.map(item => ({
+    ...item,
+    icon: getItemIcon(item.name)
+  }))
+}));
+
+// Web Audio API 復古音效生成器
+let audioCtx = null;
+function getAudioCtx() {
+  if (!audioCtx) {
+    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){}
+  }
+  return audioCtx;
+}
+function playTone(freq, dur, type='square', vol=0.12, delay=0) {
+  try {
+    const ctx = getAudioCtx(); if (!ctx) return;
+    const osc = ctx.createOscillator(), gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.type = type; osc.frequency.setValueAtTime(freq, ctx.currentTime + delay);
+    gain.gain.setValueAtTime(vol, ctx.currentTime + delay);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + dur);
+    osc.start(ctx.currentTime + delay); osc.stop(ctx.currentTime + delay + dur);
+  } catch(e){}
+}
+function playCoin() { playTone(1200, 0.08, 'square', 0.1); playTone(1600, 0.06, 'square', 0.08, 0.05); }
+function playSpin() { [0, 0.08, 0.16, 0.24].forEach((d, i) => playTone(320 + i*70, 0.05, 'sawtooth', 0.07, d)); }
+function playLuckyWin() {
+  [523.25, 659.25, 783.99, 1046.5, 1318.51, 1567.98].forEach((freq, i) => {
+    playTone(freq, 0.25, 'sine', 0.15, i * 0.07);
+  });
+}
+function playNormalWin() {
+  playTone(440, 0.1, 'triangle', 0.1);
+  playTone(554.37, 0.15, 'triangle', 0.1, 0.08);
+}
+
+createApp({
+  setup() {
+    const allPools = ref(ALL_GACHA_POOLS);
+    const selectedPoolId = ref('weekly_raid_2'); // 預設突襲重置券Ⅱ
+
+    const activePool = computed(() => {
+      return allPools.value.find(p => p.id === selectedPoolId.value) || allPools.value[0];
+    });
+
+    const inventory = ref([]); // { name, icon, weight, isLucky, count }
+    const totalPulls = ref(0);
+    const luckyPullsCount = ref(0);
+
+    const isSpinning = ref(false);
+    const skipAnimation = ref(false);
+    const rollingBall = ref({ show: false, color: '#F59E0B' });
+    const customPullCount = ref(10);
+
+    // 行動端視圖模式 ('gacha' | 'inventory' | 'all')
+    const mobileViewMode = ref('gacha');
+
+    const activeTab = ref('inventory');
+    const inventoryFilter = ref('all');
+    const inventorySort = ref('count');
+    const statsSort = ref('count');
+
+    // 道具選中與懸停狀態 (完美解決手機觸控無 hover 問題)
+    const hoverItem = ref(null);
+    const selectedSlotItem = ref(null);
+    const activeInspectItem = computed(() => selectedSlotItem.value || hoverItem.value);
+
+    function onSlotClick(item) {
+      if (selectedSlotItem.value && selectedSlotItem.value.name === item.name) {
+        selectedSlotItem.value = null;
+      } else {
+        selectedSlotItem.value = item;
+      }
+    }
+
+    const showResultModal = ref(false);
+    const currentResults = ref([]);
+    const hasLuckyPull = ref(false);
+    const resultViewMode = ref('list');
+
+    function onSwitchPool() {
+      saveData();
+    }
+
+    // 加權隨機抽樣 (純機率，無保底)
+    function weightedRandom(pool) {
+      const total = pool.reduce((sum, i) => sum + i.weight, 0);
+      let r = Math.random() * total;
+      for (const item of pool) {
+        r -= item.weight;
+        if (r <= 0) return item;
+      }
+      return pool[pool.length - 1];
+    }
+
+    // 抽卡主流程 (支援自訂數量)
+    async function doPull(rawCount) {
+      if (isSpinning.value) return;
+      const count = Math.min(Math.max(parseInt(rawCount) || 1, 1), 1000);
+      customPullCount.value = count;
+
+      playCoin();
+      isSpinning.value = true;
+
+      const results = [];
+      let pulledLucky = false;
+      const poolItems = activePool.value.items;
+
+      for (let i = 0; i < count; i++) {
+        const item = weightedRandom(poolItems);
+        results.push(item);
+        totalPulls.value++;
+
+        if (item.isLucky) {
+          luckyPullsCount.value++;
+          pulledLucky = true;
+        }
+
+        // 加入背包 (依名稱合併數量)
+        const exist = inventory.value.find(inv => inv.name === item.name);
+        if (exist) {
+          exist.count++;
+          if (!exist.icon) exist.icon = getItemIcon(item.name);
+        } else {
+          inventory.value.push({
+            name: item.name,
+            icon: item.icon || getItemIcon(item.name),
+            weight: item.weight,
+            isLucky: item.isLucky,
+            count: 1
+          });
+        }
+      }
+
+      currentResults.value = results;
+      hasLuckyPull.value = pulledLucky;
+
+      if (!skipAnimation.value) {
+        playSpin();
+        rollingBall.value = {
+          show: true,
+          color: pulledLucky ? '#FBBF24' : ['#3B82F6','#10B981','#EF4444','#8B5CF6'][Math.floor(Math.random()*4)]
+        };
+        await new Promise(r => setTimeout(r, 650));
+      }
+
+      isSpinning.value = false;
+      rollingBall.value.show = false;
+      showResultModal.value = true;
+
+      if (pulledLucky) {
+        playLuckyWin();
+      } else {
+        playNormalWin();
+      }
+
+      saveData();
+    }
+
+    function closeResultModal() {
+      showResultModal.value = false;
+    }
+
+    function goToInventoryFromModal() {
+      showResultModal.value = false;
+      activeTab.value = 'inventory';
+      mobileViewMode.value = 'inventory';
+    }
+
+    // 本次抽獎結果彙整 (一行一行加總模式)
+    const currentResultsAggregated = computed(() => {
+      const map = {};
+      for (const item of currentResults.value) {
+        if (!map[item.name]) {
+          map[item.name] = { ...item, count: 0 };
+        }
+        map[item.name].count++;
+      }
+      return Object.values(map).sort((a, b) => b.count - a.count);
+    });
+
+    // 背包篩選與排序
+    const filteredInventory = computed(() => {
+      let list = [...inventory.value];
+      if (inventoryFilter.value === 'lucky') {
+        list = list.filter(i => i.isLucky);
+      }
+      if (inventorySort.value === 'count') {
+        list.sort((a, b) => b.count - a.count);
+      } else if (inventorySort.value === 'rate') {
+        list.sort((a, b) => a.weight - b.weight);
+      } else if (inventorySort.value === 'name') {
+        list.sort((a, b) => a.name.localeCompare(b.name, 'zh-TW'));
+      }
+      return list;
+    });
+
+    const inventoryTotalCount = computed(() => {
+      return inventory.value.reduce((sum, i) => sum + i.count, 0);
+    });
+
+    // 統計加總列表 (各道具抽取數量加總 + 歐皇大獎)
+    const statsAggregatedList = computed(() => {
+      let list = [...inventory.value];
+      if (statsSort.value === 'count') {
+        list.sort((a, b) => b.count - a.count);
+      } else if (statsSort.value === 'rate') {
+        list.sort((a, b) => a.weight - b.weight);
+      }
+      return list;
+    });
+
+    // 抽到的歐皇大獎名冊
+    const luckyList = computed(() => {
+      return inventory.value.filter(i => i.isLucky).sort((a, b) => a.weight - b.weight);
+    });
+
+    function clearInventory() {
+      if (!confirm('確定要清空道具背包嗎？此操作將同時重置所有抽取數量與歐皇統計數據！')) return;
+      inventory.value = [];
+      totalPulls.value = 0;
+      luckyPullsCount.value = 0;
+      currentResults.value = [];
+      selectedSlotItem.value = null;
+      hoverItem.value = null;
+      saveData();
+    }
+
+    function resetStats() {
+      if (!confirm('確定要重置所有抽卡統計數據與道具背包嗎？')) return;
+      totalPulls.value = 0;
+      luckyPullsCount.value = 0;
+      inventory.value = [];
+      currentResults.value = [];
+      selectedSlotItem.value = null;
+      hoverItem.value = null;
+      saveData();
+    }
+
+    const STORAGE_KEY = 'artale_multi_gacha_v1';
+    function saveData() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          selectedPoolId: selectedPoolId.value,
+          totalPulls: totalPulls.value,
+          luckyPullsCount: luckyPullsCount.value,
+          inventory: inventory.value
+        }));
+      } catch(e){}
+    }
+
+    function loadData() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          const data = JSON.parse(saved);
+          if (data.selectedPoolId) selectedPoolId.value = data.selectedPoolId;
+          totalPulls.value = data.totalPulls || 0;
+          luckyPullsCount.value = data.luckyPullsCount || 0;
+          inventory.value = (data.inventory || []).map(i => ({
+            ...i,
+            icon: getItemIcon(i.name)
+          }));
+        }
+      } catch(e){}
+    }
+
+    onMounted(loadData);
+
+    return {
+      allPools,
+      selectedPoolId,
+      activePool,
+      inventory,
+      totalPulls,
+      luckyPullsCount,
+      isSpinning,
+      skipAnimation,
+      rollingBall,
+      customPullCount,
+      mobileViewMode,
+      activeTab,
+      inventoryFilter,
+      inventorySort,
+      statsSort,
+      hoverItem,
+      selectedSlotItem,
+      activeInspectItem,
+      onSlotClick,
+      showResultModal,
+      currentResults,
+      currentResultsAggregated,
+      resultViewMode,
+      hasLuckyPull,
+      filteredInventory,
+      inventoryTotalCount,
+      statsAggregatedList,
+      luckyList,
+      onSwitchPool,
+      doPull,
+      closeResultModal,
+      goToInventoryFromModal,
+      clearInventory,
+      resetStats
+    };
+  }
+}).mount('#app');
+</script>
+
+</body>
+</html>
