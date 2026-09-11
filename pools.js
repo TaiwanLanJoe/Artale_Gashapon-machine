@@ -14,7 +14,10 @@ function getItemIcon(name) {
   // 2. 騎寵系列
   if (name.includes('騎寵')) return './images/mount.webp';
 
-  // 3. 卷軸系列 (突襲轉蛋券Ⅰ & Ⅱ)
+  // 3. 箱子系列 (優先於卷軸，避免「戒指卷軸箱」、「純白卷軸箱」被判斷為卷軸)
+  if (name.includes('箱') && !name.includes('椅')) return './images/box.webp';
+
+  // 4. 卷軸系列 (突襲轉蛋券Ⅰ & Ⅱ)
   if (name.includes('每週突襲重置卷軸')) return './images/reset-scroll.webp';
   if (name.includes('10%')) return './images/scroll-10.webp';
   if (name.includes('30%')) return './images/scroll-30.webp';
@@ -22,9 +25,8 @@ function getItemIcon(name) {
   if (name.includes('70%')) return './images/scroll-70.webp';
   if (name.includes('100%')) return './images/scroll-100.webp';
   if (name.includes('卷軸')) return './images/scroll-60.webp';
-  if (name.includes('箱') && !name.includes('椅')) return './images/box.webp';
 
-  // 4. 其餘全部（月光祭非藥水、非騎寵的所有品項，包含各類椅子、字型、戒指、裝飾道具）統一使用經典休閒椅
+  // 5. 其餘全部（月光祭非藥水、非騎寵的所有品項，包含各類椅子、字型、戒指、裝飾道具）統一使用經典休閒椅
   return './images/chair.webp';
 }
 
