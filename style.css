@@ -1,0 +1,313 @@
+/* ==========================================================================
+   Artale 楓之谷轉蛋機模擬器 - 經典復古像素與現代 RWD 響應式樣式表
+   ========================================================================== */
+
+* { box-sizing: border-box; }
+
+/* 楓之谷經典背景與 Artale 官方視覺 */
+body {
+  background: #101F33 url('./images/artale-bg.jpg') no-repeat center center fixed;
+  background-size: cover;
+  min-height: 100vh;
+  min-height: 100dvh;
+  font-family: 'Noto Sans TC', sans-serif;
+  color: #333333;
+  overflow-x: hidden;
+  user-select: none;
+  position: relative;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 行動裝置防止 iOS Safari 在點擊輸入框或選單時強制縮放頁面 */
+@media screen and (max-width: 768px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* 復古像素網格與半透明暗角模糊層，襯托楓之谷視窗 */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: radial-gradient(circle at 50% 35%, rgba(16, 31, 51, 0.72) 0%, rgba(10, 18, 30, 0.90) 100%);
+  backdrop-filter: blur(4px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* 楓之谷原版 NPC 名牌標籤 (黑底金邊) */
+.maple-npc-tag {
+  background: rgba(14, 18, 24, 0.92);
+  border: 1.5px solid #F5C242;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.6), inset 0 0 4px rgba(245, 194, 60, 0.4);
+  color: #FFE680;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;
+}
+
+/* 楓之谷原版金屬視窗主外框 (Maple Classic Window) */
+.maple-window {
+  background: #EDE8DF;
+  border: 3px solid;
+  border-color: #A3A8AF #383E45 #2A3037 #C7CCD4;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.75), 
+              inset 1px 1px 0 #FFFFFF, 
+              inset -1px -1px 0 #7A7E85;
+  position: relative;
+  border-radius: 4px;
+}
+
+/* 視窗藍色立體標題列 */
+.maple-titlebar {
+  background: linear-gradient(180deg, #537FA8 0%, #39638E 45%, #294D74 100%);
+  color: #FFFFFF;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 6px 0 10px;
+  border-bottom: 2px solid #1E3753;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.4);
+}
+
+.maple-title-text {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-shadow: 1px 1px 0 #122234, -1px -1px 0 #122234, 1px -1px 0 #122234, -1px 1px 0 #122234;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* 楓之谷經典紅色關閉按鈕 [X] */
+.maple-close-btn {
+  width: 17px;
+  height: 17px;
+  background: linear-gradient(180deg, #ED6D6D 0%, #D43F3F 50%, #A82424 100%);
+  border: 1px solid #5A1010;
+  box-shadow: inset 1px 1px 0 #FFA6A6, inset -1px -1px 0 #731313;
+  color: white;
+  font-size: 9px;
+  font-weight: 900;
+  line-height: 15px;
+  text-align: center;
+  cursor: pointer;
+  border-radius: 2px;
+}
+.maple-close-btn:active {
+  transform: translate(1px, 1px);
+  background: linear-gradient(180deg, #A82424 0%, #D43F3F 100%);
+  box-shadow: inset 1px 1px 0 #731313;
+}
+
+/* 楓之谷內凹灰底面板 (Sunken Area) */
+.maple-sunken {
+  background: #DFD9CE;
+  border: 2px solid;
+  border-color: #8C867C #FFFFFF #FFFFFF #8C867C;
+  box-shadow: inset 1px 1px 2px rgba(0,0,0,0.15);
+}
+
+/* 楓之谷米白對話/展示槽 */
+.maple-paper {
+  background: #F8F6F0;
+  border: 2px solid;
+  border-color: #8C867C #FFFFFF #FFFFFF #8C867C;
+}
+
+/* 楓之谷經典金黃色/橘色立體按鈕 */
+.maple-btn {
+  background: linear-gradient(180deg, #FFF6D1 0%, #F5C860 40%, #E39920 100%);
+  border: 1px solid #5C3804;
+  border-radius: 3px;
+  box-shadow: inset 1px 1px 0 #FFFFFF, 
+              inset -1px -1px 0 #A86A08, 
+              0 2px 0 #2A1A02;
+  color: #2D1A00;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 6px 14px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-shadow: 0 1px 0 rgba(255,255,255,0.7);
+  transition: all 0.05s ease;
+}
+.maple-btn:hover {
+  filter: brightness(1.08);
+}
+.maple-btn:active {
+  transform: translate(1px, 2px);
+  box-shadow: inset 1px 1px 1px #8A5405, 0 0 0 #2A1A02;
+}
+.maple-btn:disabled {
+  filter: grayscale(0.8) brightness(0.85);
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* 藍色輔助按鈕 */
+.maple-btn-blue {
+  background: linear-gradient(180deg, #E0F0FF 0%, #68B1F5 40%, #2977CC 100%);
+  border: 1px solid #113661;
+  box-shadow: inset 1px 1px 0 #FFFFFF, inset -1px -1px 0 #185294, 0 2px 0 #0C1E36;
+  color: #082142;
+  text-shadow: 0 1px 0 rgba(255,255,255,0.6);
+}
+
+/* 紅色輔助按鈕 */
+.maple-btn-red {
+  background: linear-gradient(180deg, #FFE2E2 0%, #F57171 40%, #D42626 100%);
+  border: 1px solid #661010;
+  box-shadow: inset 1px 1px 0 #FFFFFF, inset -1px -1px 0 #9E1919, 0 2px 0 #360707;
+  color: #400505;
+  text-shadow: 0 1px 0 rgba(255,255,255,0.6);
+}
+
+/* 楓之谷經典標籤頁 (Tabs) */
+.maple-tab-btn {
+  padding: 6px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 4px 4px 0 0;
+  border: 2px solid #36506E;
+  border-bottom: none;
+  cursor: pointer;
+  background: linear-gradient(180deg, #597A9F 0%, #3F5E82 100%);
+  color: #D3E2F2;
+  text-shadow: 1px 1px 0 #1C2D40;
+  transition: all 0.1s;
+  user-select: none;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.3);
+}
+@media (min-width: 640px) {
+  .maple-tab-btn {
+    padding: 6px 14px;
+    font-size: 12px;
+  }
+}
+.maple-tab-btn:hover {
+  color: #FFFFFF;
+  background: linear-gradient(180deg, #668BB3 0%, #4A6E96 100%);
+}
+.maple-tab-btn.active {
+  background: #EDE8DF;
+  color: #1F3652;
+  border-color: #A3A8AF #383E45 #EDE8DF #C7CCD4;
+  text-shadow: none;
+  transform: translateY(2px);
+  box-shadow: inset 0 1px 0 #FFFFFF;
+}
+
+/* 楓之谷原版道具格子 (44x44px Inventory Slot) */
+.maple-slot {
+  width: 44px;
+  height: 44px;
+  background: #D8D2C5;
+  border: 2px solid;
+  border-color: #797368 #FFFFFF #FFFFFF #797368;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: inset 1px 1px 2px rgba(0,0,0,0.2);
+  transition: all 0.1s;
+}
+@media (max-width: 360px) {
+  .maple-slot {
+    width: 40px;
+    height: 40px;
+  }
+}
+.maple-slot:hover, .maple-slot:active {
+  background: #EAE4D8;
+  outline: 2px solid #F5C860;
+}
+.maple-slot.is-selected {
+  background: #FFF4D0 !important;
+  outline: 2px solid #D97706 !important;
+  box-shadow: 0 0 8px rgba(217, 119, 6, 0.8), inset 0 0 4px rgba(245, 158, 11, 0.5) !important;
+}
+
+/* 歐皇道具金光閃爍特效 (機率 <= 0.09%) */
+.maple-slot.is-lucky {
+  background: #FFF7DC;
+  border-color: #C28B00 #FFF5A8 #FFF5A8 #C28B00;
+  box-shadow: 0 0 6px rgba(245, 194, 60, 0.8), inset 0 0 4px rgba(255, 215, 0, 0.5);
+  animation: luckyGlow 2s infinite alternate;
+}
+@keyframes luckyGlow {
+  0% { box-shadow: 0 0 4px rgba(245, 194, 60, 0.5); }
+  100% { box-shadow: 0 0 10px rgba(245, 194, 60, 0.95); }
+}
+
+.slot-count {
+  position: absolute;
+  bottom: 1px;
+  right: 2px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  font-weight: 900;
+  color: #FFFFFF;
+  text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;
+}
+
+.lucky-badge {
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  font-size: 11px;
+  line-height: 1;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.6));
+  z-index: 10;
+}
+
+/* 楓之谷 Tooltip (黑底金邊) */
+.maple-tooltip {
+  background: rgba(18, 20, 24, 0.96);
+  border: 2px solid #E09822;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.8), inset 0 0 0 1px #FFE28A;
+  color: #FFFFFF;
+  border-radius: 4px;
+  padding: 8px 12px;
+}
+
+/* 轉蛋機本體動畫 */
+@keyframes knobTurn {
+  0% { transform: rotate(0deg); }
+  30% { transform: rotate(-20deg); }
+  65% { transform: rotate(35deg); }
+  85% { transform: rotate(20deg); }
+  100% { transform: rotate(30deg); }
+}
+@keyframes globeShake {
+  0%,100% { transform: translate(0, 0) rotate(0deg); }
+  20% { transform: translate(-2px, 1px) rotate(-1.5deg); }
+  40% { transform: translate(2px, -1px) rotate(1.5deg); }
+  60% { transform: translate(-2px, -1px) rotate(-1deg); }
+  80% { transform: translate(2px, 1px) rotate(1deg); }
+}
+@keyframes ballDrop {
+  0% { transform: translateY(-70px) scale(0.6); opacity: 0; }
+  50% { transform: translateY(0) scale(1.1); opacity: 1; }
+  70% { transform: translateY(-16px) scale(0.95); }
+  85% { transform: translateY(0) scale(1.05); }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+.anim-knob { animation: knobTurn 0.8s ease-in-out; }
+.anim-shake { animation: globeShake 0.6s ease-in-out; }
+.anim-balldrop { animation: ballDrop 0.65s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
+
+/* 捲軸美化 */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #DFD9CE; }
+::-webkit-scrollbar-thumb { background: #8C867C; border: 1px solid #EDE8DF; border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: #665F55; }
