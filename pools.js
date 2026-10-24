@@ -1,6 +1,7 @@
 /**
  * Artale 楓之谷轉蛋機 - 官方機率資料庫與道具圖標映射
- * 包含三大轉蛋池：月光祭轉蛋券、每週突襲重置卷軸精選轉蛋券(突襲1)、每週突襲重置卷軸精選轉蛋券(突襲2)
+ * 包含官方轉蛋池：不給糖就搗蛋轉蛋券(萬聖節最新)、每週突襲重置卷軸精選轉蛋券Ⅰ、每週突襲重置卷軸精選轉蛋券Ⅱ、月光祭轉蛋券(往期活動)
+ * 資料來源：Artale 官方機率公開網頁 (https://artale.live/tw/probability/item-probability)
  */
 
 // 道具圖標映射函數 (對應 images/ 目錄中的高畫質楓之谷原版素材)
@@ -26,245 +27,245 @@ function getItemIcon(name) {
   if (name.includes('100%')) return './images/scroll-100.webp';
   if (name.includes('卷軸')) return './images/scroll-60.webp';
 
-  // 5. 其餘全部（月光祭非藥水、非騎寵的所有品項，包含各類椅子、字型、戒指、裝飾道具）統一使用經典休閒椅
+  // 5. 其餘全部（非藥水、非騎寵的所有品項，包含各類椅子、字型、戒指、裝飾道具）統一使用經典休閒椅
   return './images/chair.webp';
 }
 
 // 轉蛋機率表資料庫
 const GACHA_POOLS = [
   {
-    "id": "moonlight",
-    "name": "月光祭轉蛋券",
-    "shortName": "🌕 月光祭",
-    "ticketName": "月光祭轉蛋券",
-    "description": "除騎寵造型、傷害字型造型、裝飾戒指外皆可交易",
+    "id": "trick_or_treat",
+    "name": "不給糖就搗蛋轉蛋券",
+    "shortName": "🎃 萬聖節",
+    "ticketName": "不給糖就搗蛋轉蛋券",
+    "description": "由不給糖就搗蛋轉蛋券所獲得之道具，除傷害字型、騎寵造型、裝飾戒指外皆可進行交易",
     "items": [
       {
-        "name": "滿月傷害字型",
+        "name": "萬聖節貓傷害字型",
         "weight": 0.0000125,
         "rate": 0.00125,
         "isLucky": true
       },
       {
-        "name": "狐狸月亮騎寵",
+        "name": "魔女帽南瓜幽靈騎寵",
+        "weight": 0.00009090909,
+        "rate": 0.009090909,
+        "isLucky": true
+      },
+      {
+        "name": "小幽靈騎寵",
+        "weight": 0.00009090909,
+        "rate": 0.009090909,
+        "isLucky": true
+      },
+      {
+        "name": "萬聖節南瓜小屋椅子",
         "weight": 0.0009090909,
         "rate": 0.09090909,
         "isLucky": true
       },
       {
-        "name": "美味松糕騎寵",
+        "name": "我有糖！不搗蛋！",
         "weight": 0.0009090909,
         "rate": 0.09090909,
         "isLucky": true
       },
       {
-        "name": "深夜蝴蝶庭園",
-        "weight": 0.0009090909,
-        "rate": 0.09090909,
-        "isLucky": true
-      },
-      {
-        "name": "休菲凱曼的直火炭烤椅子",
-        "weight": 0.0009090909,
-        "rate": 0.09090909,
-        "isLucky": true
-      },
-      {
-        "name": "經典餐車椅",
+        "name": "與好友們一同製作萬聖節南瓜燈椅子",
         "weight": 0.0018181818,
         "rate": 0.18181818,
         "isLucky": false
       },
       {
-        "name": "華麗餐車椅",
+        "name": "萬聖節蠟燭椅子",
         "weight": 0.0018181818,
         "rate": 0.18181818,
         "isLucky": false
       },
       {
-        "name": "森林裡休息椅子：木屋",
+        "name": "萬聖節糖果富人椅子",
         "weight": 0.0018181818,
         "rate": 0.18181818,
         "isLucky": false
       },
       {
-        "name": "迎月花大臉椅子",
+        "name": "幽靈燭臺椅子",
         "weight": 0.0018181818,
         "rate": 0.18181818,
         "isLucky": false
       },
       {
-        "name": "可愛兔兔名牌戒指",
+        "name": "喵嗷名牌戒指",
         "weight": 0.0018181818,
         "rate": 0.18181818,
         "isLucky": false
       },
       {
-        "name": "可愛兔兔聊天戒指",
+        "name": "喵嗷聊天戒指",
         "weight": 0.0018181818,
         "rate": 0.18181818,
         "isLucky": false
       },
       {
-        "name": "夏鈴名牌戒指",
+        "name": "呀嗷名牌戒指",
         "weight": 0.0018181818,
         "rate": 0.18181818,
         "isLucky": false
       },
       {
-        "name": "夏鈴聊天戒指",
+        "name": "呀嗷聊天戒指",
         "weight": 0.0018181818,
         "rate": 0.18181818,
         "isLucky": false
       },
       {
-        "name": "殺人鯨的兔子之愛椅子",
+        "name": "跟萬聖貓一起的椅子",
         "weight": 0.0027272727,
         "rate": 0.27272727,
         "isLucky": false
       },
       {
-        "name": "與兔子一同慵懶椅子",
+        "name": "蜘蛛網沙發",
         "weight": 0.0027272727,
         "rate": 0.27272727,
         "isLucky": false
       },
       {
-        "name": "月光玻璃杯",
+        "name": "幽靈船椅子",
         "weight": 0.0027272727,
         "rate": 0.27272727,
         "isLucky": false
       },
       {
-        "name": "大熊娃娃椅子",
+        "name": "與死神共享溫泉浴",
         "weight": 0.0027272727,
         "rate": 0.27272727,
         "isLucky": false
       },
       {
-        "name": "跳跳兔禮物包裝貨車",
+        "name": "小幽靈卡斯柏",
         "weight": 0.0027272727,
         "rate": 0.27272727,
         "isLucky": false
       },
       {
-        "name": "搗麻糬椅子",
+        "name": "殭屍狩獵者椅子",
         "weight": 0.0036363636,
         "rate": 0.36363636,
         "isLucky": false
       },
       {
-        "name": "烏鴉與我椅子",
+        "name": "幽靈朋友椅子",
         "weight": 0.0036363636,
         "rate": 0.36363636,
         "isLucky": false
       },
       {
-        "name": "迎月花椅子",
+        "name": "魔女椅子",
         "weight": 0.0036363636,
         "rate": 0.36363636,
         "isLucky": false
       },
       {
-        "name": "梅好的夜晚",
+        "name": "恐怖的玩具禮物",
         "weight": 0.0036363636,
         "rate": 0.36363636,
         "isLucky": false
       },
       {
-        "name": "殺人鯨的兔娃娃",
+        "name": "惡魔殺手椅",
         "weight": 0.0036363636,
         "rate": 0.36363636,
         "isLucky": false
       },
       {
-        "name": "玩偶之家",
+        "name": "萬聖節的南瓜方塊椅子",
         "weight": 0.0036363636,
         "rate": 0.36363636,
         "isLucky": false
       },
       {
-        "name": "星光灑滿的山丘椅子",
-        "weight": 0.0316666667,
-        "rate": 3.16666667,
+        "name": "露營營火椅",
+        "weight": 0.03183030306,
+        "rate": 3.183030306,
         "isLucky": false
       },
       {
-        "name": "美夢枕",
-        "weight": 0.0316666667,
-        "rate": 3.16666667,
+        "name": "古董留聲機椅子",
+        "weight": 0.03183030306,
+        "rate": 3.183030306,
         "isLucky": false
       },
       {
-        "name": "保冷箱椅子",
-        "weight": 0.0316666667,
-        "rate": 3.16666667,
+        "name": "柿子樹鞦韆",
+        "weight": 0.03183030306,
+        "rate": 3.183030306,
         "isLucky": false
       },
       {
-        "name": "貓咪椅子",
-        "weight": 0.0316666667,
-        "rate": 3.16666667,
+        "name": "購物車椅",
+        "weight": 0.03183030306,
+        "rate": 3.183030306,
         "isLucky": false
       },
       {
-        "name": "遠東福運椅",
-        "weight": 0.0316666667,
-        "rate": 3.16666667,
+        "name": "治好要10週椅子",
+        "weight": 0.03183030306,
+        "rate": 3.183030306,
         "isLucky": false
       },
       {
-        "name": "煙花椅子",
-        "weight": 0.0316666667,
-        "rate": 3.16666667,
+        "name": "威爾斯柯基犬椅",
+        "weight": 0.03183030306,
+        "rate": 3.183030306,
         "isLucky": false
       },
       {
-        "name": "聊天用貓咪坐墊椅子",
-        "weight": 0.0316666667,
-        "rate": 3.16666667,
+        "name": "黑貓籃椅",
+        "weight": 0.03183030306,
+        "rate": 3.183030306,
         "isLucky": false
       },
       {
-        "name": "圖書館椅子(領導)",
-        "weight": 0.0316666667,
-        "rate": 3.16666667,
+        "name": "貓咪箱子椅",
+        "weight": 0.03183030306,
+        "rate": 3.183030306,
         "isLucky": false
       },
       {
-        "name": "圖書館椅子(感性)",
-        "weight": 0.0316666667,
-        "rate": 3.16666667,
+        "name": "尖耳木椅",
+        "weight": 0.03183030306,
+        "rate": 3.183030306,
         "isLucky": false
       },
       {
-        "name": "圖書館椅子(洞察)",
+        "name": "暖爐椅",
         "weight": 0.037996875,
         "rate": 3.7996875,
         "isLucky": false
       },
       {
-        "name": "圖書館椅子(意志)",
+        "name": "圓嘟嘟小兔椅子",
         "weight": 0.037996875,
         "rate": 3.7996875,
         "isLucky": false
       },
       {
-        "name": "圖書館椅子(手藝)",
+        "name": "嬰兒車椅子",
         "weight": 0.037996875,
         "rate": 3.7996875,
         "isLucky": false
       },
       {
-        "name": "圖書館椅子(魅力)",
+        "name": "貓頭鷹椅",
         "weight": 0.037996875,
         "rate": 3.7996875,
         "isLucky": false
       },
       {
         "name": "超級藥水 10個(可交易)",
-        "weight": 0.0443333333,
-        "rate": 4.43333333,
+        "weight": 0.04433333332,
+        "rate": 4.433333332,
         "isLucky": false
       },
       {
@@ -275,8 +276,8 @@ const GACHA_POOLS = [
       },
       {
         "name": "超級藥水 20個(可交易)",
-        "weight": 0.0316666667,
-        "rate": 3.16666667,
+        "weight": 0.03183030306,
+        "rate": 3.183030306,
         "isLucky": false
       },
       {
@@ -1009,6 +1010,309 @@ const GACHA_POOLS = [
         "name": "馴鹿奶 70個(可交易)",
         "weight": 0.0586102083484014,
         "rate": 5.86102083484014,
+        "isLucky": false
+      }
+    ]
+  },
+  {
+    "id": "moonlight",
+    "name": "月光祭轉蛋券(往期活動)",
+    "shortName": "🌕 月光祭",
+    "ticketName": "月光祭轉蛋券",
+    "description": "除騎寵造型、傷害字型造型、裝飾戒指外皆可交易",
+    "items": [
+      {
+        "name": "滿月傷害字型",
+        "weight": 0.0000125,
+        "rate": 0.00125,
+        "isLucky": true
+      },
+      {
+        "name": "狐狸月亮騎寵",
+        "weight": 0.0009090909,
+        "rate": 0.09090909,
+        "isLucky": true
+      },
+      {
+        "name": "美味松糕騎寵",
+        "weight": 0.0009090909,
+        "rate": 0.09090909,
+        "isLucky": true
+      },
+      {
+        "name": "深夜蝴蝶庭園",
+        "weight": 0.0009090909,
+        "rate": 0.09090909,
+        "isLucky": true
+      },
+      {
+        "name": "休菲凱曼的直火炭烤椅子",
+        "weight": 0.0009090909,
+        "rate": 0.09090909,
+        "isLucky": true
+      },
+      {
+        "name": "經典餐車椅",
+        "weight": 0.0018181818,
+        "rate": 0.18181818,
+        "isLucky": false
+      },
+      {
+        "name": "華麗餐車椅",
+        "weight": 0.0018181818,
+        "rate": 0.18181818,
+        "isLucky": false
+      },
+      {
+        "name": "森林裡休息椅子：木屋",
+        "weight": 0.0018181818,
+        "rate": 0.18181818,
+        "isLucky": false
+      },
+      {
+        "name": "迎月花大臉椅子",
+        "weight": 0.0018181818,
+        "rate": 0.18181818,
+        "isLucky": false
+      },
+      {
+        "name": "可愛兔兔名牌戒指",
+        "weight": 0.0018181818,
+        "rate": 0.18181818,
+        "isLucky": false
+      },
+      {
+        "name": "可愛兔兔聊天戒指",
+        "weight": 0.0018181818,
+        "rate": 0.18181818,
+        "isLucky": false
+      },
+      {
+        "name": "夏鈴名牌戒指",
+        "weight": 0.0018181818,
+        "rate": 0.18181818,
+        "isLucky": false
+      },
+      {
+        "name": "夏鈴聊天戒指",
+        "weight": 0.0018181818,
+        "rate": 0.18181818,
+        "isLucky": false
+      },
+      {
+        "name": "殺人鯨的兔子之愛椅子",
+        "weight": 0.0027272727,
+        "rate": 0.27272727,
+        "isLucky": false
+      },
+      {
+        "name": "與兔子一同慵懶椅子",
+        "weight": 0.0027272727,
+        "rate": 0.27272727,
+        "isLucky": false
+      },
+      {
+        "name": "月光玻璃杯",
+        "weight": 0.0027272727,
+        "rate": 0.27272727,
+        "isLucky": false
+      },
+      {
+        "name": "大熊娃娃椅子",
+        "weight": 0.0027272727,
+        "rate": 0.27272727,
+        "isLucky": false
+      },
+      {
+        "name": "跳跳兔禮物包裝貨車",
+        "weight": 0.0027272727,
+        "rate": 0.27272727,
+        "isLucky": false
+      },
+      {
+        "name": "搗麻糬椅子",
+        "weight": 0.0036363636,
+        "rate": 0.36363636,
+        "isLucky": false
+      },
+      {
+        "name": "烏鴉與我椅子",
+        "weight": 0.0036363636,
+        "rate": 0.36363636,
+        "isLucky": false
+      },
+      {
+        "name": "迎月花椅子",
+        "weight": 0.0036363636,
+        "rate": 0.36363636,
+        "isLucky": false
+      },
+      {
+        "name": "梅好的夜晚",
+        "weight": 0.0036363636,
+        "rate": 0.36363636,
+        "isLucky": false
+      },
+      {
+        "name": "殺人鯨的兔娃娃",
+        "weight": 0.0036363636,
+        "rate": 0.36363636,
+        "isLucky": false
+      },
+      {
+        "name": "玩偶之家",
+        "weight": 0.0036363636,
+        "rate": 0.36363636,
+        "isLucky": false
+      },
+      {
+        "name": "星光灑滿的山丘椅子",
+        "weight": 0.0316666667,
+        "rate": 3.16666667,
+        "isLucky": false
+      },
+      {
+        "name": "美夢枕",
+        "weight": 0.0316666667,
+        "rate": 3.16666667,
+        "isLucky": false
+      },
+      {
+        "name": "保冷箱椅子",
+        "weight": 0.0316666667,
+        "rate": 3.16666667,
+        "isLucky": false
+      },
+      {
+        "name": "貓咪椅子",
+        "weight": 0.0316666667,
+        "rate": 3.16666667,
+        "isLucky": false
+      },
+      {
+        "name": "遠東福運椅",
+        "weight": 0.0316666667,
+        "rate": 3.16666667,
+        "isLucky": false
+      },
+      {
+        "name": "煙花椅子",
+        "weight": 0.0316666667,
+        "rate": 3.16666667,
+        "isLucky": false
+      },
+      {
+        "name": "聊天用貓咪坐墊椅子",
+        "weight": 0.0316666667,
+        "rate": 3.16666667,
+        "isLucky": false
+      },
+      {
+        "name": "圖書館椅子(領導)",
+        "weight": 0.0316666667,
+        "rate": 3.16666667,
+        "isLucky": false
+      },
+      {
+        "name": "圖書館椅子(感性)",
+        "weight": 0.0316666667,
+        "rate": 3.16666667,
+        "isLucky": false
+      },
+      {
+        "name": "圖書館椅子(洞察)",
+        "weight": 0.037996875,
+        "rate": 3.7996875,
+        "isLucky": false
+      },
+      {
+        "name": "圖書館椅子(意志)",
+        "weight": 0.037996875,
+        "rate": 3.7996875,
+        "isLucky": false
+      },
+      {
+        "name": "圖書館椅子(手藝)",
+        "weight": 0.037996875,
+        "rate": 3.7996875,
+        "isLucky": false
+      },
+      {
+        "name": "圖書館椅子(魅力)",
+        "weight": 0.037996875,
+        "rate": 3.7996875,
+        "isLucky": false
+      },
+      {
+        "name": "超級藥水 10個(可交易)",
+        "weight": 0.0443333333,
+        "rate": 4.43333333,
+        "isLucky": false
+      },
+      {
+        "name": "超級藥水 15個(可交易)",
+        "weight": 0.038,
+        "rate": 3.8,
+        "isLucky": false
+      },
+      {
+        "name": "超級藥水 20個(可交易)",
+        "weight": 0.0316666667,
+        "rate": 3.16666667,
+        "isLucky": false
+      },
+      {
+        "name": "黃昏之露 10個(可交易)",
+        "weight": 0.0494545457,
+        "rate": 4.94545457,
+        "isLucky": false
+      },
+      {
+        "name": "黃昏之露 30個(可交易)",
+        "weight": 0.0443333333,
+        "rate": 4.43333333,
+        "isLucky": false
+      },
+      {
+        "name": "黃昏之露 50個(可交易)",
+        "weight": 0.038,
+        "rate": 3.8,
+        "isLucky": false
+      },
+      {
+        "name": "清晨之露 20個(可交易)",
+        "weight": 0.0494545455,
+        "rate": 4.94545455,
+        "isLucky": false
+      },
+      {
+        "name": "清晨之露 40個(可交易)",
+        "weight": 0.0443333333,
+        "rate": 4.43333333,
+        "isLucky": false
+      },
+      {
+        "name": "清晨之露 60個(可交易)",
+        "weight": 0.038,
+        "rate": 3.8,
+        "isLucky": false
+      },
+      {
+        "name": "馴鹿奶 30個(可交易)",
+        "weight": 0.0494545455,
+        "rate": 4.94545455,
+        "isLucky": false
+      },
+      {
+        "name": "馴鹿奶 50個(可交易)",
+        "weight": 0.0443333333,
+        "rate": 4.43333333,
+        "isLucky": false
+      },
+      {
+        "name": "馴鹿奶 70個(可交易)",
+        "weight": 0.038,
+        "rate": 3.8,
         "isLucky": false
       }
     ]
