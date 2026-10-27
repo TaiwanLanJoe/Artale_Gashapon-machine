@@ -13,16 +13,16 @@
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
 
 <!-- 引入獨立楓之谷樣式表 -->
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=20261027_v2">
 
 <!-- 引入獨立轉蛋機率表資料庫 -->
-<script src="pools.js"></script>
+<script src="pools.js?v=20261027_v2"></script>
 
 <!-- 引入楓之谷 1,366 首官方背景音樂庫 -->
-<script src="bgm-data.js"></script>
+<script src="bgm-data.js?v=20261027_v2"></script>
 
 <!-- 引入 Artale 裝備與卷軸資料庫以及經典音效系統 -->
-<script src="scroll-data.js"></script>
+<script src="scroll-data.js?v=20261027_v2"></script>
 
 <!-- 引入 YouTube Iframe Player API -->
 <script>
@@ -267,7 +267,7 @@
         <div class="market-npc flex flex-col items-center group" @click="currentView = 'gacha'">
           <!-- 對話氣泡 -->
           <div class="maple-bubble mb-2 group-hover:scale-105 transition-transform">
-            <span>🎰 官方機率全開！點擊開啟轉蛋機</span>
+            <span>🎰 最新【魔女的重置/庇護】轉蛋已上架！點擊進入</span>
           </div>
           
           <!-- 轉蛋機圖示 -->
@@ -1757,7 +1757,8 @@ createApp({
           selectedPoolId: selectedPoolId.value,
           totalPulls: totalPulls.value,
           luckyPullsCount: luckyPullsCount.value,
-          inventory: inventory.value
+          inventory: inventory.value,
+          hasSeenWitchPool: true
         }));
       } catch(e){}
     }
@@ -1767,7 +1768,14 @@ createApp({
         const saved = localStorage.getItem(STORAGE_KEY);
         if (saved) {
           const data = JSON.parse(saved);
-          if (data.selectedPoolId) selectedPoolId.value = data.selectedPoolId;
+          if (!data.hasSeenWitchPool) {
+            // 首次偵測到魔女更新，自動切換至最新魔女機台
+            selectedPoolId.value = 'witch_reset';
+          } else if (data.selectedPoolId && allPools.value.some(p => p.id === data.selectedPoolId)) {
+            selectedPoolId.value = data.selectedPoolId;
+          } else {
+            selectedPoolId.value = 'witch_reset';
+          }
           totalPulls.value = data.totalPulls || 0;
           luckyPullsCount.value = data.luckyPullsCount || 0;
           inventory.value = (data.inventory || []).map(i => ({
