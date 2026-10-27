@@ -417,7 +417,7 @@
             </div>
 
             <!-- 快捷機台切換按鈕組 (簡潔標籤，完全不溢出不截斷) -->
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-1 sm:gap-1.5">
+            <div class="grid grid-cols-3 sm:grid-cols-6 gap-1 sm:gap-1.5">
               <button v-for="p in allPools" :key="p.id" type="button"
                       @click="selectedPoolId = p.id; onSwitchPool()"
                       class="py-1.5 px-0.5 text-center text-xs font-black rounded transition-all border-2 cursor-pointer flex items-center justify-center min-h-[34px] shadow-sm select-none"
@@ -1545,9 +1545,9 @@ function playNormalWin() {
 
 createApp({
   setup() {
-    // 從獨立 pools.js 讀取四大官方轉蛋機台
+    // 從獨立 pools.js 讀取六大官方轉蛋機台
     const allPools = ref(window.GACHA_POOLS || GACHA_POOLS);
-    const selectedPoolId = ref('trick_or_treat'); // 預設當前最新萬聖節「不給糖就搗蛋轉蛋券」
+    const selectedPoolId = ref('witch_reset'); // 預設當前最新「魔女的重置・保護券精選轉蛋券」
 
     // 當前主場景視圖 ('market' | 'gacha' | 'forge')，預設一進入為自由市場首頁
     const currentView = ref('market');
