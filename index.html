@@ -13,16 +13,16 @@
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
 
 <!-- 引入獨立楓之谷樣式表 -->
-<link rel="stylesheet" href="style.css?v=20261027_v2">
+<link rel="stylesheet" href="style.css?v=20261124_v1">
 
 <!-- 引入獨立轉蛋機率表資料庫 -->
-<script src="pools.js?v=20261027_v2"></script>
+<script src="pools.js?v=20261124_v1"></script>
 
 <!-- 引入楓之谷 1,366 首官方背景音樂庫 -->
-<script src="bgm-data.js?v=20261027_v2"></script>
+<script src="bgm-data.js?v=20261124_v1"></script>
 
 <!-- 引入 Artale 裝備與卷軸資料庫以及經典音效系統 -->
-<script src="scroll-data.js?v=20261027_v2"></script>
+<script src="scroll-data.js?v=20261124_v1"></script>
 
 <!-- 引入 YouTube Iframe Player API -->
 <script>
@@ -71,7 +71,7 @@
           </span>
         </div>
         <p class="text-[11px] sm:text-xs text-blue-200 font-medium truncate">
-          官方完整機率庫 · 三大專屬轉蛋機台 · 原版 Maple UI
+          官方完整機率庫 · 七大專屬轉蛋機台 · 原版 Maple UI
         </p>
       </div>
     </div>
@@ -267,7 +267,7 @@
         <div class="market-npc flex flex-col items-center group" @click="currentView = 'gacha'">
           <!-- 對話氣泡 -->
           <div class="maple-bubble mb-2 group-hover:scale-105 transition-transform">
-            <span>🎰 最新【魔女的重置/庇護】轉蛋已上架！點擊進入</span>
+            <span>🎰 最新【迷你西格諾斯】寵物轉蛋已上架！點擊進入</span>
           </div>
           
           <!-- 轉蛋機圖示 -->
@@ -416,15 +416,16 @@
               </span>
             </div>
 
-            <!-- 快捷機台切換按鈕組 (簡潔標籤，完全不溢出不截斷) -->
-            <div class="grid grid-cols-3 sm:grid-cols-6 gap-1 sm:gap-1.5">
+            <!-- 快捷機台切換按鈕組 (自適應折行，七大機台皆工整無孤立) -->
+            <div class="flex flex-wrap gap-1 sm:gap-1.5">
               <button v-for="p in allPools" :key="p.id" type="button"
                       @click="selectedPoolId = p.id; onSwitchPool()"
-                      class="py-1.5 px-0.5 text-center text-xs font-black rounded transition-all border-2 cursor-pointer flex items-center justify-center min-h-[34px] shadow-sm select-none"
+                      class="flex-1 min-w-[92px] py-1.5 px-1.5 text-center text-xs font-black rounded transition-all border-2 cursor-pointer flex items-center justify-center min-h-[34px] shadow-sm select-none relative"
                       :class="selectedPoolId === p.id 
                         ? 'bg-gradient-to-b from-[#FFF2A3] to-[#E5A823] text-[#4A2600] border-[#92400E] shadow-md scale-[1.02]' 
                         : 'bg-gradient-to-b from-[#597A9F] to-[#3F5E82] text-white border-[#2A3E54] hover:opacity-90'">
-                <span>{{ p.shortName }}</span>
+                <span class="truncate">{{ p.shortName }}</span>
+                <span v-if="p.isNew" class="ml-1 px-1 py-[1px] text-[8px] leading-none bg-red-600 text-white rounded-sm font-black animate-pulse shrink-0">NEW</span>
               </button>
             </div>
 
@@ -1545,9 +1546,9 @@ function playNormalWin() {
 
 createApp({
   setup() {
-    // 從獨立 pools.js 讀取六大官方轉蛋機台
+    // 從獨立 pools.js 讀取七大官方轉蛋機台
     const allPools = ref(window.GACHA_POOLS || GACHA_POOLS);
-    const selectedPoolId = ref('witch_reset'); // 預設當前最新「魔女的重置・保護券精選轉蛋券」
+    const selectedPoolId = ref('mini_cygnus'); // 預設當前最新「迷你西格諾斯轉蛋券」
 
     // 當前主場景視圖 ('market' | 'gacha' | 'forge')，預設一進入為自由市場首頁
     const currentView = ref('market');
@@ -1758,7 +1759,7 @@ createApp({
           totalPulls: totalPulls.value,
           luckyPullsCount: luckyPullsCount.value,
           inventory: inventory.value,
-          hasSeenWitchPool: true
+          hasSeenCygnusPool: true
         }));
       } catch(e){}
     }
@@ -1768,13 +1769,13 @@ createApp({
         const saved = localStorage.getItem(STORAGE_KEY);
         if (saved) {
           const data = JSON.parse(saved);
-          if (!data.hasSeenWitchPool) {
-            // 首次偵測到魔女更新，自動切換至最新魔女機台
-            selectedPoolId.value = 'witch_reset';
+          if (!data.hasSeenCygnusPool) {
+            // 首次偵測到寵物轉蛋更新，自動切換至最新迷你西格諾斯機台
+            selectedPoolId.value = 'mini_cygnus';
           } else if (data.selectedPoolId && allPools.value.some(p => p.id === data.selectedPoolId)) {
             selectedPoolId.value = data.selectedPoolId;
           } else {
-            selectedPoolId.value = 'witch_reset';
+            selectedPoolId.value = 'mini_cygnus';
           }
           totalPulls.value = data.totalPulls || 0;
           luckyPullsCount.value = data.luckyPullsCount || 0;

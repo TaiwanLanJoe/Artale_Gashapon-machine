@@ -1,19 +1,20 @@
 /**
  * Artale 楓之谷轉蛋機 - 官方機率資料庫與道具圖標映射
  * 包含官方轉蛋池：
- * 1. 魔女的重置・保護券精選轉蛋券 (最新限定精選)
- * 2. 魔女的庇護・入場券精選轉蛋券 (最新限定精選)
- * 3. 不給糖就搗蛋轉蛋券 (萬聖節限定)
- * 4. 每週突襲重置卷軸精選轉蛋券Ⅰ
- * 5. 每週突襲重置卷軸精選轉蛋券Ⅱ
- * 6. 月光祭轉蛋券(往期活動)
+ * 1. 迷你西格諾斯轉蛋券 (最新寵物轉蛋)
+ * 2. 魔女的重置・保護券精選轉蛋券
+ * 3. 魔女的庇護・入場券精選轉蛋券
+ * 4. 不給糖就搗蛋轉蛋券 (萬聖節限定)
+ * 5. 每週突襲重置卷軸精選轉蛋券Ⅰ
+ * 6. 每週突襲重置卷軸精選轉蛋券Ⅱ
+ * 7. 月光祭轉蛋券(往期活動)
  * 資料來源：Artale 官方機率公開網頁 (https://artale.live/tw/probability/item-probability)
  */
 
 // 道具圖標映射函數 (對應 images/ 目錄中的高畫質楓之谷原版素材)
 function getItemIcon(name) {
   // 1. 藥水系列
-  if (name.includes('超級藥水')) return './images/power-elixir.webp';
+  if (name.includes('超級藥水') || name.includes('特殊藥水')) return './images/power-elixir.webp';
   if (name.includes('黃昏之露')) return './images/sunset-dew.webp';
   if (name.includes('清晨之露')) return './images/sunrise-dew.webp';
   if (name.includes('馴鹿奶')) return './images/reindeer-milk.webp';
@@ -21,10 +22,10 @@ function getItemIcon(name) {
   // 2. 騎寵系列
   if (name.includes('騎寵')) return './images/mount.webp';
 
-  // 3. 箱子系列 (優先於卷軸，避免「戒指卷軸箱」、「純白卷軸箱」被判斷為卷軸)
+  // 3. 箱子系列 (優先於卷軸，避免「戒指卷軸箱」、「純白卷軸箱」、「迷你西格諾斯隨機箱」被判斷為其他類型)
   if (name.includes('箱') && !name.includes('椅')) return './images/box.webp';
 
-  // 4. 卷軸系列 (突襲轉蛋券Ⅰ & Ⅱ、魔女精選轉蛋券)
+  // 4. 卷軸系列 (突襲轉蛋券、魔女精選、純白卷軸、70% 卷軸)
   if (name.includes('每週突襲重置卷軸')) return './images/reset-scroll.webp';
   if (name.includes('10%')) return './images/scroll-10.webp';
   if (name.includes('30%')) return './images/scroll-30.webp';
@@ -33,12 +34,307 @@ function getItemIcon(name) {
   if (name.includes('100%')) return './images/scroll-100.webp';
   if (name.includes('卷軸')) return './images/scroll-60.webp';
 
-  // 5. 其餘全部（非藥水、非騎寵的所有品項，包含各類椅子、字型、戒指、裝飾道具）統一使用經典休閒椅
+  // 5. 特殊道具 (寵物擴充券、歐洛拉戒指、飄雪結晶等)
+  if (name.includes('寵物') || name.includes('歐洛拉') || name.includes('結晶')) return './images/special.webp';
+
+  // 6. 其餘全部（包含各類椅子、字型、裝飾戒指等）統一使用經典休閒椅
   return './images/chair.webp';
 }
 
 // 轉蛋機率表資料庫
 const GACHA_POOLS = [
+  {
+    "id": "mini_cygnus",
+    "name": "迷你西格諾斯轉蛋券",
+    "shortName": "🐾 迷你西格諾斯",
+    "ticketName": "迷你西格諾斯轉蛋券",
+    "isNew": true,
+    "description": "「迷你西格諾斯隨機箱」、「迷你那因哈特隨機箱」、「迷你神獸隨機箱」、「[專屬] 純白卷軸5%」、「歐洛拉戒指 +2(3日)」、「歐洛拉戒指 +2(1日)」、「甜蜜藥水箱」及「可疊加的飄雪結晶」皆不可交易。",
+    "items": [
+      {
+        "name": "迷你西格諾斯隨機箱",
+        "weight": 0.00090909,
+        "rate": 0.090909,
+        "isLucky": true
+      },
+      {
+        "name": "迷你那因哈特隨機箱",
+        "weight": 0.00090909,
+        "rate": 0.090909,
+        "isLucky": true
+      },
+      {
+        "name": "迷你神獸隨機箱",
+        "weight": 0.00090909,
+        "rate": 0.090909,
+        "isLucky": true
+      },
+      {
+        "name": "[專屬] 純白卷軸5%",
+        "weight": 0.00090909,
+        "rate": 0.090909,
+        "isLucky": true
+      },
+      {
+        "name": "純白卷軸5%",
+        "weight": 0.00090909,
+        "rate": 0.090909,
+        "isLucky": true
+      },
+      {
+        "name": "純白卷軸3%",
+        "weight": 0.00090909,
+        "rate": 0.090909,
+        "isLucky": true
+      },
+      {
+        "name": "純白卷軸1%",
+        "weight": 0.00090909,
+        "rate": 0.090909,
+        "isLucky": true
+      },
+      {
+        "name": "皇家騎士精選技能書箱",
+        "weight": 0.00181818,
+        "rate": 0.181818,
+        "isLucky": false
+      },
+      {
+        "name": "上衣幸運卷軸70%",
+        "weight": 0.00181818,
+        "rate": 0.181818,
+        "isLucky": false
+      },
+      {
+        "name": "下衣敏捷性卷軸70%",
+        "weight": 0.00181818,
+        "rate": 0.181818,
+        "isLucky": false
+      },
+      {
+        "name": "套服力量詛咒卷軸70%",
+        "weight": 0.00181818,
+        "rate": 0.181818,
+        "isLucky": false
+      },
+      {
+        "name": "寵物欄位3擴充券",
+        "weight": 0.00181818,
+        "rate": 0.181818,
+        "isLucky": false
+      },
+      {
+        "name": "寵物欄位3擴充券",
+        "weight": 0.00181818,
+        "rate": 0.181818,
+        "isLucky": false
+      },
+      {
+        "name": "歐洛拉戒指 +2(3日)",
+        "weight": 0.00181818,
+        "rate": 0.181818,
+        "isLucky": false
+      },
+      {
+        "name": "歐洛拉戒指 +2(1日)",
+        "weight": 0.00272727,
+        "rate": 0.272727,
+        "isLucky": false
+      },
+      {
+        "name": "寵物欄位3擴充券",
+        "weight": 0.00272727,
+        "rate": 0.272727,
+        "isLucky": false
+      },
+      {
+        "name": "寵物欄位3擴充券",
+        "weight": 0.00272727,
+        "rate": 0.272727,
+        "isLucky": false
+      },
+      {
+        "name": "套服幸運詛咒卷軸70%",
+        "weight": 0.00272727,
+        "rate": 0.272727,
+        "isLucky": false
+      },
+      {
+        "name": "套服智力詛咒卷軸70%",
+        "weight": 0.00272727,
+        "rate": 0.272727,
+        "isLucky": false
+      },
+      {
+        "name": "上衣力量卷軸70%",
+        "weight": 0.00272727,
+        "rate": 0.272727,
+        "isLucky": false
+      },
+      {
+        "name": "鞋子跳躍力卷軸70%",
+        "weight": 0.00272727,
+        "rate": 0.272727,
+        "isLucky": false
+      },
+      {
+        "name": "套服敏捷詛咒卷軸70%",
+        "weight": 0.00363636,
+        "rate": 0.363636,
+        "isLucky": false
+      },
+      {
+        "name": "下衣體力卷軸70%",
+        "weight": 0.00363636,
+        "rate": 0.363636,
+        "isLucky": false
+      },
+      {
+        "name": "套服防禦詛咒卷軸70%",
+        "weight": 0.00363636,
+        "rate": 0.363636,
+        "isLucky": false
+      },
+      {
+        "name": "下衣跳躍卷軸70%",
+        "weight": 0.00363636,
+        "rate": 0.363636,
+        "isLucky": false
+      },
+      {
+        "name": "鞋子敏捷性卷軸70%",
+        "weight": 0.00363636,
+        "rate": 0.363636,
+        "isLucky": false
+      },
+      {
+        "name": "鞋子移動速度卷軸70%",
+        "weight": 0.0361752041611021,
+        "rate": 3.61752041611021,
+        "isLucky": false
+      },
+      {
+        "name": "上衣體力卷軸70%",
+        "weight": 0.0361752041611021,
+        "rate": 3.61752041611021,
+        "isLucky": false
+      },
+      {
+        "name": "下衣防禦力卷軸70%",
+        "weight": 0.0361752041611021,
+        "rate": 3.61752041611021,
+        "isLucky": false
+      },
+      {
+        "name": "上衣防禦力卷軸70%",
+        "weight": 0.0361752041611021,
+        "rate": 3.61752041611021,
+        "isLucky": false
+      },
+      {
+        "name": "甜蜜藥水箱",
+        "weight": 0.0361752041611021,
+        "rate": 3.61752041611021,
+        "isLucky": false
+      },
+      {
+        "name": "可疊加的飄雪結晶",
+        "weight": 0.0361752041611021,
+        "rate": 3.61752041611021,
+        "isLucky": false
+      },
+      {
+        "name": "超級藥水×10",
+        "weight": 0.050645301718365995,
+        "rate": 5.0645301718366,
+        "isLucky": false
+      },
+      {
+        "name": "超級藥水×15",
+        "weight": 0.0434102529397341,
+        "rate": 4.34102529397341,
+        "isLucky": false
+      },
+      {
+        "name": "超級藥水×20",
+        "weight": 0.0434102529397341,
+        "rate": 4.34102529397341,
+        "isLucky": false
+      },
+      {
+        "name": "特殊藥水×10",
+        "weight": 0.050645301718365995,
+        "rate": 5.0645301718366,
+        "isLucky": false
+      },
+      {
+        "name": "特殊藥水×15",
+        "weight": 0.0434102529397341,
+        "rate": 4.34102529397341,
+        "isLucky": false
+      },
+      {
+        "name": "特殊藥水×20",
+        "weight": 0.0434102529397341,
+        "rate": 4.34102529397341,
+        "isLucky": false
+      },
+      {
+        "name": "黃昏之露×10",
+        "weight": 0.0564956386211397,
+        "rate": 5.64956386211397,
+        "isLucky": false
+      },
+      {
+        "name": "黃昏之露×30",
+        "weight": 0.050645301718365995,
+        "rate": 5.0645301718366,
+        "isLucky": false
+      },
+      {
+        "name": "黃昏之露×50",
+        "weight": 0.0434102529397341,
+        "rate": 4.34102529397341,
+        "isLucky": false
+      },
+      {
+        "name": "清晨之露×20",
+        "weight": 0.0564956386211397,
+        "rate": 5.64956386211397,
+        "isLucky": false
+      },
+      {
+        "name": "清晨之露×40",
+        "weight": 0.050645301718365995,
+        "rate": 5.0645301718366,
+        "isLucky": false
+      },
+      {
+        "name": "清晨之露×60",
+        "weight": 0.0434102529397341,
+        "rate": 4.34102529397341,
+        "isLucky": false
+      },
+      {
+        "name": "馴鹿奶×30",
+        "weight": 0.0564956386211397,
+        "rate": 5.64956386211397,
+        "isLucky": false
+      },
+      {
+        "name": "馴鹿奶×50",
+        "weight": 0.050645301718365995,
+        "rate": 5.0645301718366,
+        "isLucky": false
+      },
+      {
+        "name": "馴鹿奶×70",
+        "weight": 0.043410252939733704,
+        "rate": 4.34102529397337,
+        "isLucky": false
+      }
+    ]
+  },
   {
     "id": "witch_reset",
     "name": "魔女的重置・保護券精選轉蛋券",
